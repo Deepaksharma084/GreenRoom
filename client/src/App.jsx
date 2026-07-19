@@ -1,13 +1,13 @@
-import { useState } from 'react'
+import { Routes, Route } from 'react-router-dom'
 import './App.css'
 import LoginPage from './pages/LoginPage'
+import CreateOrJoinRoomPage from './pages/CreateOrJoinRoomPage'
 
 export default function App() {
-  //logic if needed
-
   return (
-    <>
-      <LoginPage />
-    </>
+    <Routes>
+      <Route path="/" element={<LoginPage />} />
+      <Route path="/CreateOrJoinRoomPage" element={<CreateOrJoinRoomPage />} />
+    </Routes>
   )
 }

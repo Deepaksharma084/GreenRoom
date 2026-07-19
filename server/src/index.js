@@ -1,12 +1,11 @@
 import express from 'express';
-import mongoose from 'mongoose';
 import dotenv from 'dotenv';
 import cors from 'cors';
 import path from "path";
 import { fileURLToPath } from 'url';
 
-import pool from './db.js';
-import { testRouter } from '../routes/Login.js';
+import pool from '../db.js';
+import { guestLogin } from '../routes/GuestLogin.js';
 
 // Setup __dirname in ES Module
 const __filename = fileURLToPath(import.meta.url);
@@ -41,7 +40,7 @@ app.get('/', (req, res) => {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-app.use('/api/test', testRouter);
+app.use('/guest-login', guestLogin);
 
 const PORT = process.env.PORT || 5000;
 

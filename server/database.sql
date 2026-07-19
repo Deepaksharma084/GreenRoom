@@ -1,29 +1,41 @@
 CREATE DATABASE greenroom;
 
--- Connect to the database before running the rest of the below tables.
+-- Connect to the database before executing the tables.
 
 CREATE TABLE users (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
     google_id VARCHAR(255) UNIQUE NOT NULL,
     name VARCHAR(100) NOT NULL,
     email VARCHAR(255) UNIQUE NOT NULL,
     avatar_url TEXT,
+
+    is_online BOOLEAN DEFAULT FALSE,
+    last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE guest_sessions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+
     display_name VARCHAR(100) NOT NULL,
-    session_token TEXT UNIQUE NOT NULL,
+
+    jwt_id UUID UNIQUE NOT NULL,
+
+    is_online BOOLEAN DEFAULT FALSE,
     last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+
     expires_at TIMESTAMP NOT NULL,
+
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
 
 CREATE TABLE meetings (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
 
-    room_code VARCHAR(20) UNIQUE NOT NULL,
+    room_id VARCHAR(20) UNIQUE NOT NULL,
+    room_name VARCHAR(100) NOT NULL,
 
     host_user_id UUID,
     host_guest_id UUID,
@@ -31,7 +43,8 @@ CREATE TABLE meetings (
     started_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     ended_at TIMESTAMP,
 
-    status VARCHAR(20) DEFAULT 'ACTIVE'
+    status VARCHAR(20)
+        DEFAULT 'ACTIVE'
         CHECK (status IN ('ACTIVE', 'ENDED')),
 
     CONSTRAINT fk_host_user
@@ -60,6 +73,8 @@ CREATE TABLE meeting_participants (
     user_id UUID,
     guest_session_id UUID,
 
+    display_name VARCHAR(100) NOT NULL,
+
     joined_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     left_at TIMESTAMP,
 
@@ -76,7 +91,7 @@ CREATE TABLE meeting_participants (
     CONSTRAINT fk_guest
         FOREIGN KEY (guest_session_id)
         REFERENCES guest_sessions(id)
-        ON DELETE CASCADE,
+        ON DELETE SET NULL,
 
     CONSTRAINT only_one_participant
         CHECK (
