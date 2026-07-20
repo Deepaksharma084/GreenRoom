@@ -15,6 +15,9 @@ dotenv.config();
 
 const app = express();
 
+import cookieParser from "cookie-parser";
+app.use(cookieParser());
+
 const allowedOrigins = [
     'http://localhost:5173'
 ];
