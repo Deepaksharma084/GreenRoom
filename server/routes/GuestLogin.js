@@ -6,8 +6,9 @@ import crypto from "crypto";
 export const guestLogin = async (req, res) => {
     const { name } = req.body;
 
+    const displayName = name.trim();
     // Validate the name
-    if (!name || !name.trim()) {
+    if (!name || !displayName) {
 
         return res.status(400).json({
             error: "Name is required"
@@ -23,7 +24,7 @@ export const guestLogin = async (req, res) => {
             {
                 jti,
                 type: "guest",
-                name
+                name: displayName
             },
             process.env.JWT_SECRET,
             {
@@ -43,15 +44,16 @@ export const guestLogin = async (req, res) => {
             VALUES ($1, $2, $3)
             RETURNING *
             `,
-            [name.trim(), jti, expiresAt]
+            [displayName, jti, expiresAt]
         );
 
         // Send JWT as HttpOnly cookie
-        res.cookie("token", token, {
+        res.cookie("accessToken", token, {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "lax",
-            maxAge: 24 * 60 * 60 * 1000
+            sameSite: "none", // Allows cross-site cookie sharing for development and production
+            maxAge: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
+            path: "/" //Sends this cookie on every request to website.
         });
 
         return res.status(201).json({

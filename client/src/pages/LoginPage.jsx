@@ -6,7 +6,7 @@ export default function LoginPage() {
     const [name, setName] = useState("");
     const navigate = useNavigate();
 
-    const handleSubmit = async (e) =>{
+    const handleSubmit = async (e) => {
         e.preventDefault();
 
         const trimmedName = name.trim();
@@ -27,9 +27,9 @@ export default function LoginPage() {
             });
 
             const data = await response.json();
-
-            if (response.ok && data.name) {
-                navigate(`/CreateOrJoinRoomPage?name=${encodeURIComponent(data.name)}`);
+            console.log("This is the data" + " " + JSON.stringify(data));
+            if (response.ok && data.guest.name) {
+                navigate(`/CreateOrJoinRoomPage?name=${encodeURIComponent(data.guest.name)}`);
             } else {
                 console.error('Login error:', data.error || "An error occurred during login");
             }
