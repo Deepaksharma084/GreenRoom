@@ -1,1 +1,30 @@
 @import "tailwindcss";
+
+.glassy-panel {
+    background: linear-gradient(135deg, rgba(255, 255, 255, 0.28), rgba(255, 255, 255, 0.14));
+    backdrop-filter: blur(16px);
+    -webkit-backdrop-filter: blur(16px);
+}
+
+.glassy-button {
+    position: relative;
+    transition: transform 0.3s ease, box-shadow 0.3s ease, background-color 0.3s ease;
+}
+
+.glassy-button::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: linear-gradient(120deg, transparent 20%, rgba(255, 255, 255, 0.35) 50%, transparent 80%);
+    transform: translateX(-180%);
+    transition: transform 0.7s ease;
+}
+
+.glassy-button:hover {
+    transform: translateY(-3px) scale(1.02);
+    box-shadow: 0 16px 35px rgba(5, 46, 22, 0.26);
+}
+
+.glassy-button:hover::before {
+    transform: translateX(180%);
+}

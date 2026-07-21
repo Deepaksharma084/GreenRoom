@@ -36,28 +36,41 @@ export default function LoginPage() {
         } catch (error) {
             console.error('Login error:', error);
         }
-
     };
 
     return (
-        <div className="flex flex-col gap-18 items-center justify-center min-h-screen bg-red-500">
-            <div className="flex flex-col gap-2 items-center justify-center">
-                <p>Login as Guest</p>
-                <form onSubmit={handleSubmit}>
-                    <input
-                        type="text"
-                        placeholder="Enter your name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                    />
-                    <button type="submit">
-                        Start
-                    </button>
-                </form>
-            </div>
+        <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(167,243,208,0.85),_rgba(5,46,22,0.95))] px-4 py-10 text-emerald-950">
+            <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-5xl flex-col items-center justify-center gap-8">
+                <div className="glassy-panel w-full max-w-md rounded-[2rem] border border-white/40 px-8 py-10 shadow-[0_25px_80px_rgba(3,34,20,0.35)] backdrop-blur-xl">
+                    <div className="mb-6 text-center">
+                        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-700/80">Welcome</p>
+                        <h1 className="mt-2 text-3xl font-semibold text-emerald-950">Login as Guest</h1>
+                        <p className="mt-2 text-sm text-emerald-700/80">Jump in quickly and start your meeting experience.</p>
+                    </div>
 
-            <div>
-                <p>Login with Google for more features</p>
+                    <form onSubmit={handleSubmit} className="flex flex-col gap-4">
+                        <input
+                            type="text"
+                            placeholder="Enter your name"
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            className="rounded-full border border-emerald-200/80 bg-white/80 px-5 py-3 text-base text-emerald-950 outline-none transition-all duration-300 placeholder:text-emerald-700/60 focus:border-emerald-400 focus:bg-white"
+                        />
+
+                        <button
+                            type="submit"
+                            className="glassy-button group relative overflow-hidden rounded-full bg-emerald-950 px-5 py-3 font-semibold text-emerald-50 shadow-lg shadow-emerald-900/30"
+                        >
+                            <span className="relative z-10 inline-block transition-transform duration-300 group-hover:-translate-y-0.5">
+                                Start
+                            </span>
+                        </button>
+                    </form>
+                </div>
+
+                <div className="rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm text-emerald-50/90 backdrop-blur-md">
+                    Login with Google for more features
+                </div>
             </div>
         </div>
     );
