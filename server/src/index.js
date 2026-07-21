@@ -5,7 +5,7 @@ import path from "path";
 import { fileURLToPath } from 'url';
 
 import pool from '../db.js';
-import { guestLogin } from '../routes/GuestLogin.js';
+import authRoutes from "../routes/authRoutes.js";
 
 // Setup __dirname in ES Module
 const __filename = fileURLToPath(import.meta.url);
@@ -43,7 +43,7 @@ app.get('/', (req, res) => {
 app.use(cors(corsOptions));
 app.use(express.json());
 
-app.use('/guest-login', guestLogin);
+app.use("/auth", authRoutes);
 
 const PORT = process.env.PORT || 5000;
 

@@ -17,7 +17,7 @@ export default function LoginPage() {
         }
 
         try {
-            const response = await fetch(`${API_BASE_URL}/guest-login`, {
+            const response = await fetch(`${API_BASE_URL}/auth/guest`, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json"
