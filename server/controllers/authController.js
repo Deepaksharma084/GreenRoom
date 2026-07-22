@@ -70,14 +70,91 @@ export const guestLogin = async (req, res) => {
     }
 };
 
-
-export const googleLogin = async (req, res) => {
-
-}
-
 export const googleCallback = async (req, res) => {
+    try {
 
-}
+        const {
+            id: googleId,
+            displayName,
+            emails,
+            photos
+        } = req.user;
+
+        const email = emails[0].value;
+        const avatarUrl = photos[0].value;
+
+        const existingUser = await pool.query(
+            `
+            SELECT *
+            FROM users
+            WHERE google_id = $1
+            `,
+            [googleId]
+        );
+
+        let user;
+
+        if (existingUser.rows.length === 0) {
+
+            const newUser = await pool.query(
+                `
+                INSERT INTO users
+                (google_id, name, email, avatar_url)
+                VALUES ($1, $2, $3, $4)
+                RETURNING *
+                `,
+                [
+                    googleId,
+                    displayName,
+                    email,
+                    avatarUrl
+                ]
+            );
+
+            user = newUser.rows[0];
+
+        } else {
+
+            user = existingUser.rows[0];
+
+        }
+
+        const jti = crypto.randomUUID();
+
+        const token = jwt.sign(
+            {
+                jti,
+                type: "user",
+                userId: user.id,
+                name: user.name,
+                email: user.email
+            },
+            process.env.JWT_SECRET,
+            {
+                expiresIn: "7d"
+            }
+        );
+
+        res.cookie("accessToken", token, {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: "none",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+            path: "/"
+        });
+
+        return res.redirect(process.env.CLIENT_URL);
+
+    } catch (err) {
+
+        console.error(err);
+
+        return res.status(500).json({
+            error: "Internal server error"
+        });
+
+    }
+};
 
 export const logout = async (req, res) => {
 

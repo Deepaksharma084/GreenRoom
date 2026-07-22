@@ -1,8 +1,8 @@
 import express from "express";
+import passport from "passport";
 
 import {
     guestLogin,
-    googleLogin,
     googleCallback,
     logout,
     getCurrentUser
@@ -12,9 +12,21 @@ const router = express.Router();
 
 router.post("/guest", guestLogin);
 
-router.get("/google", googleLogin);
+router.get(
+    "/google",
+    passport.authenticate("google", {
+        scope: ["profile", "email"]
+    })
+);
 
-router.get("/google/callback", googleCallback);
+// Step 2: Google redirects here
+router.get(
+    "/google/callback",
+    passport.authenticate("google", {
+        session: false
+    }),
+    googleCallback
+);
 
 router.post("/logout", logout);
 

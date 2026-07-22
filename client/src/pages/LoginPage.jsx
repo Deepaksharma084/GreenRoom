@@ -38,6 +38,10 @@ export default function LoginPage() {
         }
     };
 
+    const handleGoogleLogin = () => {
+        window.location.href = `${API_BASE_URL}/auth/google`;
+    };
+
     return (
         <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(167,243,208,0.85),_rgba(5,46,22,0.95))] px-4 py-10 text-emerald-950">
             <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-5xl flex-col items-center justify-center gap-8">
@@ -68,9 +72,13 @@ export default function LoginPage() {
                     </form>
                 </div>
 
-                <div className="rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm text-emerald-50/90 backdrop-blur-md">
+                <button
+                    type="button"
+                    onClick={handleGoogleLogin}
+                    className="rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm text-emerald-50/90 backdrop-blur-md transition hover:bg-white/20"
+                >
                     Login with Google for more features
-                </div>
+                </button>
             </div>
         </div>
     );

@@ -3,8 +3,12 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import path from "path";
 import { fileURLToPath } from 'url';
+import passport from "./config/passport.js";
+
+const app = express();
 
 import pool from '../db.js';
+app.use(passport.initialize());
 import authRoutes from "../routes/authRoutes.js";
 
 // Setup __dirname in ES Module
@@ -12,8 +16,6 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
 dotenv.config();
-
-const app = express();
 
 import cookieParser from "cookie-parser";
 app.use(cookieParser());
