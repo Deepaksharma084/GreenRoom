@@ -72,13 +72,24 @@ export default function LoginPage() {
                     </form>
                 </div>
 
-                <button
-                    type="button"
-                    onClick={handleGoogleLogin}
-                    className="rounded-full border border-white/25 bg-white/10 px-4 py-2 text-sm text-emerald-50/90 backdrop-blur-md transition hover:bg-white/20"
-                >
-                    Login with Google for more features
-                </button>
+                <div className="w-full max-w-md rounded-[1.5rem] border border-white/30 bg-white/10 p-4 shadow-[0_12px_35px_rgba(3,34,20,0.2)] backdrop-blur-md">
+                    <p className="mb-2 text-center text-sm font-medium text-emerald-50/90">
+                        Unlock more features with a Google account
+                    </p>
+                    <button
+                        type="button"
+                        onClick={handleGoogleLogin}
+                        className="group flex w-full items-center justify-center gap-3 rounded-full border border-white/30 bg-white/15 px-5 py-3 text-sm font-semibold text-emerald-50/95 transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/25"
+                    >
+                        <svg viewBox="0 0 24 24" className="h-5 w-5" aria-hidden="true">
+                            <path fill="#EA4335" d="M12 10.2v3.9h5.4c-.2 1.2-.9 2.2-1.9 2.9l3 2.3c1.8-1.7 2.8-4.1 2.8-7.1 0-.7-.1-1.4-.2-2H12z" />
+                            <path fill="#34A853" d="M12 22c2.6 0 4.8-.8 6.4-2.2l-3-2.3c-.8.5-1.8.9-3.4.9-2.6 0-4.8-1.7-5.6-4.1H3.3v2.6C4.9 19.8 8.2 22 12 22z" />
+                            <path fill="#4A90E2" d="M6.4 13.3c-.2-.6-.3-1.3-.3-2s.1-1.4.3-2V6.7H3.3c-1.1 2-1.1 4.4 0 6.6l3.1-2.0z" />
+                            <path fill="#FBBC05" d="M12 6.2c1.5 0 2.8.5 3.8 1.5l2.9-2.9C16.7 3.2 14.5 2 12 2 8.2 2 4.9 4.2 3.3 6.7l3.1 2.6c.8-2.4 3-4.1 5.6-4.1z" />
+                        </svg>
+                        <span>Continue with Google</span>
+                    </button>
+                </div>
             </div>
         </div>
     );
