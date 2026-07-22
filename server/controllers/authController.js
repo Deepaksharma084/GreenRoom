@@ -119,11 +119,8 @@ export const googleCallback = async (req, res) => {
 
         }
 
-        const jti = crypto.randomUUID();
-
         const token = jwt.sign(
             {
-                jti,
                 type: "user",
                 userId: user.id,
                 name: user.name,

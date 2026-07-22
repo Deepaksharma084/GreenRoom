@@ -1,5 +1,6 @@
 import express from "express";
 import passport from "passport";
+import { verifyJWT } from "../middleware/verifyJWT.js";
 
 import {
     guestLogin,
@@ -28,8 +29,8 @@ router.get(
     googleCallback
 );
 
-router.post("/logout", logout);
+router.post("/logout", verifyJWT, logout);
 
-router.get("/me", getCurrentUser);
+router.get("/me", verifyJWT, getCurrentUser);
 
 export default router;
