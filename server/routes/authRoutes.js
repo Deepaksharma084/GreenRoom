@@ -1,6 +1,6 @@
 import express from "express";
 import passport from "passport";
-import { verifyJWT } from "../middleware/verifyJWT.js";
+import verifyJWT from "../middleware/verifyJWT.js";
 
 import {
     guestLogin,

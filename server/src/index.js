@@ -3,7 +3,7 @@ import dotenv from 'dotenv';
 import cors from 'cors';
 import path from "path";
 import { fileURLToPath } from 'url';
-import passport from "./config/passport.js";
+import passport from "../config/passport.js";
 
 const app = express();
 
