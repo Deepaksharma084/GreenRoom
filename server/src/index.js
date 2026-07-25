@@ -1,24 +1,23 @@
 import express from 'express';
-import dotenv from 'dotenv';
 import cors from 'cors';
 import path from "path";
 import { fileURLToPath } from 'url';
+import dotenv from 'dotenv';
+import cookieParser from "cookie-parser";
 
-// Setup __dirname in ES Module FIRST
+dotenv.config();
+
+// Passport will now successfully find process.env variables upon import
+import passport from "../config/passport.js";
+import pool from '../db.js';
+import authRoutes from "../routes/authRoutes.js";
+
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 
-// Load .env file with correct path
-dotenv.config({ path: path.resolve(__dirname, '../.env') });
-
-import passport from "../config/passport.js";
 const app = express();
 
-import pool from '../db.js';
 app.use(passport.initialize());
-import authRoutes from "../routes/authRoutes.js";
-
-import cookieParser from "cookie-parser";
 app.use(cookieParser());
 
 const allowedOrigins = [
@@ -41,7 +40,7 @@ const corsOptions = {
 
 app.get('/', (req, res) => {
     res.status(200).send('Server is alive and running!');
-}); // Health check endpoint for server in uptimeRobot
+});
 
 app.use(cors(corsOptions));
 app.use(express.json());
