@@ -158,24 +158,47 @@ export const logout = async (req, res) => {
 }
 
 export const getCurrentUser = async (req, res) => {
-    //going to implement something like this
-    const user = req.user;
     try {
-        return res.status(201).json({
-            message: "User login successful",
-            user: {
-                id: user.google_id,
-                name: user.name,
-                email: user.email,
-                avatar: user.avatar_url,
-                is_online: user.is_online,
-                last_active: user.last_active,
-                member_since: user.created_at
-            }
-        })
+
+        if (req.user.type === "guest") {
+            return res.status(200).json({
+                user: {
+                    type: "guest",
+                    name: req.user.name
+                }
+            });
+        }
+
+        const result = await pool.query(
+            `
+            SELECT
+                id,
+                google_id,
+                name,
+                email,
+                avatar_url,
+                created_at
+            FROM users
+            WHERE id = $1
+            `,
+            [req.user.userId]
+        );
+
+        if (result.rows.length === 0) {
+            return res.status(404).json({
+                error: "User not found"
+            });
+        }
+
+        return res.status(200).json({
+            user: result.rows[0]
+        });
+
+    } catch (err) {
+        console.error(err);
+
+        return res.status(500).json({
+            error: "Internal server error"
+        });
     }
-    catch (err) {
-        console.log(err.message)
-        return res.status(500).json({ error: "Internal server error" });
-    }
-}
+};
