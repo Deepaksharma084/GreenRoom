@@ -160,20 +160,46 @@ export const logout = async (req, res) => {
 export const getCurrentUser = async (req, res) => {
     try {
 
+        // Guest user
         if (req.user.type === "guest") {
+
+            const result = await pool.query(
+                `
+                SELECT
+                    id,
+                    display_name,
+                    created_at
+                FROM guest_sessions
+                WHERE jwt_id = $1
+                `,
+                [req.user.jti]
+            );
+
+            if (result.rows.length === 0) {
+                return res.status(404).json({
+                    error: "Guest not found"
+                });
+            }
+
+            const guest = result.rows[0];
+
             return res.status(200).json({
                 user: {
+                    id: guest.id,
                     type: "guest",
-                    name: req.user.name
+                    name: guest.display_name,
+                    email: null,
+                    avatar_url: null,
+                    created_at: guest.created_at
                 }
             });
         }
 
+        // Google user
         const result = await pool.query(
             `
             SELECT
                 id,
-                google_id,
                 name,
                 email,
                 avatar_url,
@@ -190,15 +216,26 @@ export const getCurrentUser = async (req, res) => {
             });
         }
 
+        const user = result.rows[0];
+
         return res.status(200).json({
-            user: result.rows[0]
+            user: {
+                id: user.id,
+                type: "user",
+                name: user.name,
+                email: user.email,
+                avatar_url: user.avatar_url,
+                created_at: user.created_at
+            }
         });
 
     } catch (err) {
+
         console.error(err);
 
         return res.status(500).json({
             error: "Internal server error"
         });
+
     }
 };

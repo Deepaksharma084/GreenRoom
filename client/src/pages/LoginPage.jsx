@@ -22,16 +22,12 @@ export default function LoginPage() {
                 headers: {
                     "Content-Type": "application/json"
                 },
-                credentials: 'include',
-                body: JSON.stringify({ name: trimmedName }),
+                credentials: "include",
+                body: JSON.stringify({ name: trimmedName })
             });
 
-            const data = await response.json();
-            console.log("This is the data" + " " + JSON.stringify(data));
-            if (response.ok && data.guest.name) {
-                navigate(`/CreateOrJoinRoomPage?name=${encodeURIComponent(data.guest.name)}`);
-            } else {
-                console.error('Login error:', data.error || "An error occurred during login");
+            if (response.ok) {
+                navigate("/");
             }
         } catch (error) {
             console.error('Login error:', error);
@@ -41,6 +37,8 @@ export default function LoginPage() {
     const handleGoogleLogin = () => {
         window.location.href = `${API_BASE_URL}/auth/google`;
     };
+
+
 
     return (
         <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(167,243,208,0.85),_rgba(5,46,22,0.95))] px-4 py-10 text-emerald-950">
