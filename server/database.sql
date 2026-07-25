@@ -10,7 +10,6 @@ CREATE TABLE users (
     email VARCHAR(255) UNIQUE NOT NULL,
     avatar_url TEXT,
 
-    is_online BOOLEAN DEFAULT FALSE,
     last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
@@ -23,7 +22,6 @@ CREATE TABLE guest_sessions (
 
     jwt_id UUID UNIQUE NOT NULL,
 
-    is_online BOOLEAN DEFAULT FALSE,
     last_active TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
 
     expires_at TIMESTAMP NOT NULL,

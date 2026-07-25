@@ -158,5 +158,24 @@ export const logout = async (req, res) => {
 }
 
 export const getCurrentUser = async (req, res) => {
-
+    //going to implement something like this
+    const user = req.user;
+    try {
+        return res.status(201).json({
+            message: "User login successful",
+            user: {
+                id: user.google_id,
+                name: user.name,
+                email: user.email,
+                avatar: user.avatar_url,
+                is_online: user.is_online,
+                last_active: user.last_active,
+                member_since: user.created_at
+            }
+        })
+    }
+    catch (err) {
+        console.log(err.message)
+        return res.status(500).json({ error: "Internal server error" });
+    }
 }
