@@ -48,13 +48,15 @@ export const guestLogin = async (req, res) => {
         );
 
         // Send JWT as HttpOnly cookie
-        res.cookie("accessToken", token, {
+        const cookieOptions = {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "none", // Allows cross-site cookie sharing for development and production
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
             maxAge: 24 * 60 * 60 * 1000, // 24 hours in milliseconds
-            path: "/" //Sends this cookie on every request to website.
-        });
+            path: "/"
+        };
+
+        res.cookie("accessToken", token, cookieOptions);
 
         return res.status(201).json({
             message: "Guest login successful",
@@ -132,13 +134,15 @@ export const googleCallback = async (req, res) => {
             }
         );
 
-        res.cookie("accessToken", token, {
+        const cookieOptions = {
             httpOnly: true,
             secure: process.env.NODE_ENV === "production",
-            sameSite: "none",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
             maxAge: 7 * 24 * 60 * 60 * 1000,
             path: "/"
-        });
+        };
+
+        res.cookie("accessToken", token, cookieOptions);
 
         return res.redirect(process.env.CLIENT_URL);
 
@@ -154,8 +158,21 @@ export const googleCallback = async (req, res) => {
 };
 
 export const logout = async (req, res) => {
+    try {
+        const cookieOptions = {
+            httpOnly: true,
+            secure: process.env.NODE_ENV === "production",
+            sameSite: process.env.NODE_ENV === "production" ? "none" : "lax",
+            path: "/"
+        };
 
-}
+        res.clearCookie("accessToken", cookieOptions);
+        return res.status(200).json({ message: "Logged out successfully" });
+    } catch (err) {
+        console.error(err);
+        return res.status(500).json({ error: "Internal server error" });
+    }
+};
 
 export const getCurrentUser = async (req, res) => {
     try {
