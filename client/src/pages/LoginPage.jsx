@@ -43,7 +43,7 @@ export default function LoginPage() {
     return (
         <div className="min-h-screen bg-[radial-gradient(circle_at_top,_rgba(167,243,208,0.85),_rgba(5,46,22,0.95))] px-4 py-10 text-emerald-950">
             <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-5xl flex-col items-center justify-center gap-8">
-                <div className="glassy-panel w-full max-w-md rounded-[2rem] border border-white/40 px-8 py-10 shadow-[0_25px_80px_rgba(3,34,20,0.35)] backdrop-blur-xl">
+                <div className="w-full max-w-md rounded-[2rem] border border-white/40 px-8 py-10 shadow-[0_25px_80px_rgba(3,34,20,0.35)] backdrop-blur-xl">
                     <div className="mb-6 text-center">
                         <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-700/80">Welcome</p>
                         <h1 className="mt-2 text-3xl font-semibold text-emerald-950">Login as Guest</h1>
@@ -70,7 +70,7 @@ export default function LoginPage() {
                     </form>
                 </div>
 
-                <div className="w-full max-w-md rounded-[1.5rem] border border-white/30 bg-white/10 p-4 shadow-[0_12px_35px_rgba(3,34,20,0.2)] backdrop-blur-md">
+                <div className="w-full max-w-md rounded-[1.5rem] border border-white/30 p-4 shadow-[0_12px_35px_rgba(3,34,20,0.2)] backdrop-blur-xl">
                     <p className="mb-2 text-center text-sm font-medium text-emerald-50/90">
                         Unlock more features with a Google account
                     </p>
