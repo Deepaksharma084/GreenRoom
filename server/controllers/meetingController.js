@@ -2,6 +2,7 @@ import pool from "../db.js";
 import { generateRoomID } from "../utils/generateRoomID.js";
 
 export const createMeeting = async (req, res) => {
+
     const { title } = req.body;
 
     const roomName = title?.trim();
@@ -12,7 +13,12 @@ export const createMeeting = async (req, res) => {
         });
     }
 
+    const client = await pool.connect();
+
     try {
+
+        // Start transaction(At this point PostgreSQL says: I'm waiting, I won't permanently save anything until you tell me. )
+        await client.query("BEGIN");
 
         let hostUserId = null;
         let hostGuestId = null;
@@ -29,9 +35,11 @@ export const createMeeting = async (req, res) => {
         // Guest user
         else if (req.user.type === "guest") {
 
-            const guestResult = await pool.query(
+            const guestResult = await client.query(
                 `
-                SELECT id, display_name
+                SELECT
+                    id,
+                    display_name
                 FROM guest_sessions
                 WHERE jwt_id = $1
                 `,
@@ -39,19 +47,24 @@ export const createMeeting = async (req, res) => {
             );
 
             if (guestResult.rows.length === 0) {
+
+                await client.query("ROLLBACK");
+
                 return res.status(404).json({
                     error: "Guest session not found"
                 });
+
             }
 
             hostGuestId = guestResult.rows[0].id;
             displayName = guestResult.rows[0].display_name;
         }
 
+        // Generate unique room ID
         const roomID = await generateRoomID();
 
         // Create meeting
-        const meetingResult = await pool.query(
+        const meetingResult = await client.query(
             `
             INSERT INTO meetings
             (
@@ -73,8 +86,8 @@ export const createMeeting = async (req, res) => {
 
         const meeting = meetingResult.rows[0];
 
-        // Host becomes first participant
-        await pool.query(
+        // Add host as the first participant
+        await client.query(
             `
             INSERT INTO meeting_participants
             (
@@ -93,6 +106,9 @@ export const createMeeting = async (req, res) => {
             ]
         );
 
+        // Save all changes
+        await client.query("COMMIT");
+
         return res.status(201).json({
             message: "Meeting created successfully",
             meeting: {
@@ -104,11 +120,20 @@ export const createMeeting = async (req, res) => {
 
     } catch (err) {
 
+        // Undo everything if any query failed
+        await client.query("ROLLBACK");
+
         console.error(err);
 
         return res.status(500).json({
             error: "Internal server error while creating meeting"
         });
 
+    } finally {
+
+        // Return client to the pool
+        client.release();
+
     }
+
 };
