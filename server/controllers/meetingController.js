@@ -137,3 +137,57 @@ export const createMeeting = async (req, res) => {
     }
 
 };
+
+
+export const joinMeeting = async (req, res) => {
+    const client = await pool.connect();
+
+    try {
+        await client.query("BEGIN");
+
+        let hostUserId = null;
+        let hostGuestId = null;
+        let displayName = "";
+
+        // Google user
+        if (req.user.type === "user") {
+
+            hostUserId = req.user.userId;
+            displayName = req.user.name;
+
+        }
+
+        // Guest user
+        else if (req.user.type === "guest") {
+
+            const guestResult = await client.query(
+                `
+                SELECT
+                    id,
+                    display_name
+                FROM guest_sessions
+                WHERE jwt_id = $1
+                `,
+                [req.user.jti]
+            );
+
+            if (guestResult.rows.length === 0) {
+
+                await client.query("ROLLBACK");
+
+                return res.status(404).json({
+                    error: "Guest session not found"
+                });
+
+            }
+
+            hostGuestId = guestResult.rows[0].id;
+            displayName = guestResult.rows[0].display_name;
+
+            
+        }
+    }
+    catch (err) {
+
+    }
+}
