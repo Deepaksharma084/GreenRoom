@@ -98,3 +98,13 @@ CREATE TABLE meeting_participants (
             (user_id IS NULL AND guest_session_id IS NOT NULL)
         )
 );
+
+-- Unique index for Google users
+CREATE UNIQUE INDEX unique_meeting_user
+ON meeting_participants (meeting_id, user_id)
+WHERE user_id IS NOT NULL;
+
+-- Unique index for Guest users
+CREATE UNIQUE INDEX unique_meeting_guest
+ON meeting_participants (meeting_id, guest_session_id)
+WHERE guest_session_id IS NOT NULL;
