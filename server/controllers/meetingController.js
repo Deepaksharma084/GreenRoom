@@ -138,11 +138,13 @@ export const createMeeting = async (req, res) => {
 
 };
 
+import pool from "../db.js";
+
 export const joinMeeting = async (req, res) => {
 
-    const { roomId } = req.body;
+    const roomID = req.body.roomId?.trim();
 
-    if (!roomId?.trim()) {
+    if (!roomID) {
         return res.status(400).json({
             error: "Room ID is required"
         });
@@ -153,6 +155,40 @@ export const joinMeeting = async (req, res) => {
     try {
 
         await client.query("BEGIN");
+
+        // Find meeting
+        const meetingResult = await client.query(
+            `
+            SELECT
+                id,
+                status
+            FROM meetings
+            WHERE room_id = $1
+            `,
+            [roomID]
+        );
+
+        if (meetingResult.rows.length === 0) {
+
+            await client.query("ROLLBACK");
+
+            return res.status(404).json({
+                error: "Meeting not found"
+            });
+
+        }
+
+        const meeting = meetingResult.rows[0];
+
+        if (meeting.status === "ENDED") {
+
+            await client.query("ROLLBACK");
+
+            return res.status(400).json({
+                error: "Meeting has already ended"
+            });
+
+        }
 
         let userId = null;
         let guestSessionId = null;
@@ -195,69 +231,6 @@ export const joinMeeting = async (req, res) => {
 
         }
 
-        // Find meeting
-        const meetingResult = await client.query(
-            `
-            SELECT
-                id,
-                status
-            FROM meetings
-            WHERE room_id = $1
-            `,
-            [roomId.trim()]
-        );
-
-        if (meetingResult.rows.length === 0) {
-
-            await client.query("ROLLBACK");
-
-            return res.status(404).json({
-                error: "Meeting not found"
-            });
-
-        }
-
-        const meeting = meetingResult.rows[0];
-
-        if (meeting.status === "ENDED") {
-
-            await client.query("ROLLBACK");
-
-            return res.status(400).json({
-                error: "Meeting has already ended"
-            });
-
-        }
-
-        // Prevent duplicate joins
-        const existingParticipant = await client.query(
-            `
-            SELECT id
-            FROM meeting_participants
-            WHERE meeting_id = $1
-            AND (
-                user_id = $2
-                OR
-                guest_session_id = $3
-            )
-            `,
-            [
-                meeting.id,
-                userId,
-                guestSessionId
-            ]
-        );
-
-        if (existingParticipant.rows.length > 0) {
-
-            await client.query("ROLLBACK");
-
-            return res.status(409).json({
-                error: "Already joined this meeting"
-            });
-
-        }
-
         // Join meeting
         await client.query(
             `
@@ -282,12 +255,22 @@ export const joinMeeting = async (req, res) => {
 
         return res.status(200).json({
             message: "Joined meeting successfully",
-            meetingId: meeting.id
+            meeting: {
+                id: meeting.id,
+                roomId: roomID
+            }
         });
 
     } catch (err) {
 
         await client.query("ROLLBACK");
+
+        // Duplicate participant
+        if (err.code === "23505") {
+            return res.status(409).json({
+                error: "Already joined this meeting"
+            });
+        }
 
         console.error(err);
 
