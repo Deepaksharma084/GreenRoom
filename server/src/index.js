@@ -11,6 +11,7 @@ dotenv.config();
 import passport from "../config/passport.js";
 import pool from '../db.js';
 import authRoutes from "../routes/authRoutes.js";
+import meetingRoutes from "../routes/meetingRoutes.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -46,6 +47,7 @@ app.use(cors(corsOptions));
 app.use(express.json());
 
 app.use("/auth", authRoutes);
+app.use("/meeting", meetingRoutes);
 
 const PORT = process.env.PORT || 5000;
 

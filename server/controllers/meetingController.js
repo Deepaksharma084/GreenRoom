@@ -138,8 +138,6 @@ export const createMeeting = async (req, res) => {
 
 };
 
-import pool from "../db.js";
-
 export const joinMeeting = async (req, res) => {
 
     const roomID = req.body.roomId?.trim();
@@ -285,3 +283,11 @@ export const joinMeeting = async (req, res) => {
     }
 
 };
+
+export const leaveMeeting = async (req, res) => {
+    console.log("Leave meeting endpoint hit");
+}
+
+export const getMeetingHistory = async (req, res) => {
+    console.log("Get meeting history endpoint hit");
+}
