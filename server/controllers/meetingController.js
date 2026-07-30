@@ -138,21 +138,30 @@ export const createMeeting = async (req, res) => {
 
 };
 
-
 export const joinMeeting = async (req, res) => {
+
+    const { roomId } = req.body;
+
+    if (!roomId?.trim()) {
+        return res.status(400).json({
+            error: "Room ID is required"
+        });
+    }
+
     const client = await pool.connect();
 
     try {
+
         await client.query("BEGIN");
 
-        let hostUserId = null;
-        let hostGuestId = null;
+        let userId = null;
+        let guestSessionId = null;
         let displayName = "";
 
         // Google user
         if (req.user.type === "user") {
 
-            hostUserId = req.user.userId;
+            userId = req.user.userId;
             displayName = req.user.name;
 
         }
@@ -181,13 +190,115 @@ export const joinMeeting = async (req, res) => {
 
             }
 
-            hostGuestId = guestResult.rows[0].id;
+            guestSessionId = guestResult.rows[0].id;
             displayName = guestResult.rows[0].display_name;
 
-            
         }
-    }
-    catch (err) {
+
+        // Find meeting
+        const meetingResult = await client.query(
+            `
+            SELECT
+                id,
+                status
+            FROM meetings
+            WHERE room_id = $1
+            `,
+            [roomId.trim()]
+        );
+
+        if (meetingResult.rows.length === 0) {
+
+            await client.query("ROLLBACK");
+
+            return res.status(404).json({
+                error: "Meeting not found"
+            });
+
+        }
+
+        const meeting = meetingResult.rows[0];
+
+        if (meeting.status === "ENDED") {
+
+            await client.query("ROLLBACK");
+
+            return res.status(400).json({
+                error: "Meeting has already ended"
+            });
+
+        }
+
+        // Prevent duplicate joins
+        const existingParticipant = await client.query(
+            `
+            SELECT id
+            FROM meeting_participants
+            WHERE meeting_id = $1
+            AND (
+                user_id = $2
+                OR
+                guest_session_id = $3
+            )
+            `,
+            [
+                meeting.id,
+                userId,
+                guestSessionId
+            ]
+        );
+
+        if (existingParticipant.rows.length > 0) {
+
+            await client.query("ROLLBACK");
+
+            return res.status(409).json({
+                error: "Already joined this meeting"
+            });
+
+        }
+
+        // Join meeting
+        await client.query(
+            `
+            INSERT INTO meeting_participants
+            (
+                meeting_id,
+                user_id,
+                guest_session_id,
+                display_name
+            )
+            VALUES ($1, $2, $3, $4)
+            `,
+            [
+                meeting.id,
+                userId,
+                guestSessionId,
+                displayName
+            ]
+        );
+
+        await client.query("COMMIT");
+
+        return res.status(200).json({
+            message: "Joined meeting successfully",
+            meetingId: meeting.id
+        });
+
+    } catch (err) {
+
+        await client.query("ROLLBACK");
+
+        console.error(err);
+
+        return res.status(500).json({
+            error: "Internal server error while joining meeting"
+        });
+
+    } finally {
+
+        client.release();
 
     }
-}
+
+};
