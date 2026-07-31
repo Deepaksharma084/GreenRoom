@@ -78,7 +78,14 @@ export default function JoinRoomPage() {
                         </label>
 
                         <p className="text-sm text-emerald-600/90">Example: A7K92P</p>
-                        {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
+                        {errorMessage && <p className="text-sm text-red-600">
+                            {errorMessage}{errorMessage === 'Authentication required' ? (() => {
+                                setTimeout(() => {
+                                    navigate("/login");
+                                }, 2000);
+                                return '';
+                            })() : ''}
+                        </p>}
 
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <button
