@@ -78,8 +78,12 @@ export default function CreateRoomPage() {
                         </label>
 
                         <p className="text-sm text-emerald-600/90">Example: Weekly Team Sync</p>
-                        {errorMessage && <p className="text-sm text-red-600">{errorMessage}</p>}
-
+                        {errorMessage}{errorMessage === 'Authentication required' ? (() => {
+                            setTimeout(() => {
+                                navigate("/login");
+                            }, 2000);
+                            return '';
+                        })() : ''}
                         <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                             <button
                                 type="submit"
