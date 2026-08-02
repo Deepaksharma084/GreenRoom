@@ -3,7 +3,7 @@ import { API_BASE_URL } from "../config";
 import { useNavigate } from "react-router-dom";
 
 export default function HomePage() {
-    const [currentUser, setCurrentUser] = useState("Guest");
+    const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
     const navigate = useNavigate();
@@ -19,9 +19,9 @@ export default function HomePage() {
                     setLoading(false);
                     return;
                 }
+                const data = await response.json();
                 console.log(data);
                 console.log(data.user);
-                const data = await response.json();
                 if (data.user === undefined) {
                     setCurrentUser("Guest");
                 } else {
