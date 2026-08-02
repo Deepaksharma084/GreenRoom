@@ -67,7 +67,7 @@ export default function HomePage() {
                         <h1 className="mt-2 text-3xl font-semibold text-emerald-950">
                             {currentUser
                                 ? `Welcome ${currentUser.name}`
-                                : "Welcome Guest"}
+                                : ""}
                         </h1>
 
                         <p className="mt-2 text-sm text-emerald-700/80">
