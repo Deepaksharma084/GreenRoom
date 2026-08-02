@@ -8,10 +8,6 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 
 dotenv.config();
 
-console.log('CLIENT ID IS:', process.env.GOOGLE_CLIENT_ID);
-console.log('CLIENT SECRET IS:', process.env.GOOGLE_CLIENT_SECRET);
-console.log('CALLBACK URL IS:', process.env.GOOGLE_CALLBACK_URL);
-
 passport.use(
     new GoogleStrategy(
         {

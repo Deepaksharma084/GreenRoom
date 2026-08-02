@@ -19,11 +19,17 @@ export default function HomePage() {
                     setLoading(false);
                     return;
                 }
-
+                console.log(data);
+                console.log(data.user);
                 const data = await response.json();
-                setCurrentUser(data.user);
+                if (data.user === undefined) {
+                    setCurrentUser("Guest");
+                } else {
+                    setCurrentUser(data.user);
+                }
+
             } catch (err) {
-                console.error(err);
+                console.error(err.message);
             } finally {
                 setLoading(false);
             }
