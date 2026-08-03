@@ -63,14 +63,14 @@ export default function HomePage() {
             <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-5xl flex-col items-center justify-center gap-8">
                 <div className=" w-full max-w-md rounded-[2rem] border border-white/40 px-8 py-10 shadow-[0_25px_80px_rgba(3,34,20,0.35)] backdrop-blur-xl">
                     <div className="mb-6 text-center">
-                        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-700/80">Welcome to GreenRoom</p>
+                        <p className="text-sm font-bold uppercase tracking-[0.3em] text-emerald-700/80">Welcome to GreenRoom</p>
                         <h1 className="mt-2 text-3xl font-semibold text-emerald-950">
                             {currentUser
                                 ? `Welcome ${currentUser.name}`
                                 : ""}
                         </h1>
 
-                        <p className="mt-2 text-sm text-emerald-700/80">
+                        <p className="mt-2 text-sm font-bold text-emerald-700">
                             {currentUser
                                 ? "You're ready to create or join a meeting."
                                 : "Create a room or join an existing one."}

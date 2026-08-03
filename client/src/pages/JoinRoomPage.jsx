@@ -53,16 +53,16 @@ export default function JoinRoomPage() {
             <div className="mx-auto flex min-h-[calc(100vh-5rem)] max-w-5xl flex-col items-center justify-center gap-8">
                 <div className="w-full max-w-xl rounded-[2rem] border border-white/40 bg-white/5 px-8 py-10 shadow-[0_25px_80px_rgba(3,34,20,0.35)] backdrop-blur-xl">
                     <div className="mb-8 text-center">
-                        <p className="text-sm font-semibold uppercase tracking-[0.3em] text-emerald-700/80">Join Meeting</p>
+                        <p className="text-sm font-bold uppercase tracking-[0.3em] text-emerald-700/80">Join Meeting</p>
                         <h1 className="mt-3 text-4xl font-semibold text-emerald-950 sm:text-5xl">Enter Meeting ID</h1>
-                        <p className="mx-auto mt-4 max-w-2xl text-sm leading-6 text-emerald-700/80 sm:text-base">
+                        <p className="mx-auto mt-4 max-w-2xl text-sm font-bold leading-6 text-emerald-700/60 sm:text-base">
                             Join an existing room quickly using the meeting ID your host shared.
                         </p>
                     </div>
 
                     <form onSubmit={handleJoinMeeting} className="flex flex-col gap-5">
                         <label className="space-y-3">
-                            <span className="block text-sm font-medium text-emerald-900">Room ID</span>
+                            <span className="block text-sm font-bold text-emerald-900">Room ID</span>
                             <input
                                 type="text"
                                 placeholder="Enter meeting ID"
@@ -77,7 +77,7 @@ export default function JoinRoomPage() {
                             />
                         </label>
 
-                        <p className="text-sm text-emerald-600/90">Example: A7K92P</p>
+                        <p className="text-sm font-bold text-emerald-700">Example: A7K92P</p>
                         {errorMessage && <p className="text-sm text-red-600">
                             {errorMessage}{errorMessage === 'Authentication required' ? (() => {
                                 setTimeout(() => {
