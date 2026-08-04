@@ -55,7 +55,7 @@ export default function JoinRoomPage() {
                     <div className="mb-8 text-center">
                         <p className="text-sm font-bold uppercase tracking-[0.3em] text-emerald-700/80">Join Meeting</p>
                         <h1 className="mt-3 text-4xl font-semibold text-emerald-950 sm:text-5xl">Enter Meeting ID</h1>
-                        <p className="mx-auto mt-4 max-w-2xl text-sm font-bold leading-6 text-emerald-700/60 sm:text-base">
+                        <p className="mx-auto mt-4 max-w-2xl text-sm font-semibold leading-6 text-emerald-700/60 sm:text-base">
                             Join an existing room quickly using the meeting ID your host shared.
                         </p>
                     </div>
@@ -77,7 +77,7 @@ export default function JoinRoomPage() {
                             />
                         </label>
 
-                        <p className="text-sm font-bold text-emerald-700">Example: A7K92P</p>
+                        <p className="text-sm font-semibold text-emerald-700">Example: A7K92P</p>
                         {errorMessage && <p className="text-sm text-red-600">
                             {errorMessage}{errorMessage === 'Authentication required' ? (() => {
                                 setTimeout(() => {

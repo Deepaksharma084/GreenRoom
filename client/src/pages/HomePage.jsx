@@ -70,7 +70,7 @@ export default function HomePage() {
                                 : ""}
                         </h1>
 
-                        <p className="mt-2 text-sm font-bold text-emerald-700">
+                        <p className="mt-2 text-sm font-semibold text-emerald-700">
                             {currentUser
                                 ? "You're ready to create or join a meeting."
                                 : "Create a room or join an existing one."}
