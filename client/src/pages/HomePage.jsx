@@ -54,6 +54,29 @@ export default function HomePage() {
         }
     };
 
+    const handleLogout = async () => {
+        try {
+            const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+                method: "POST",
+                credentials: "include",
+            });
+
+            if (!response.ok) {
+                throw new Error("Logout failed");
+            }
+
+            const data = await response.json();
+
+            console.log(data.message);
+            alert(data.message);
+
+            setCurrentUser(null);
+            navigate("/");
+        } catch (error) {
+            console.error("Error during logout:", error);
+        }
+    };
+
     if (loading) {
         return <p>Loading...</p>;
     }
@@ -94,7 +117,7 @@ export default function HomePage() {
                 <div className="w-full max-w-md rounded-[1.5rem] border border-white/30 p-4 shadow-[0_12px_35px_rgba(3,34,20,0.2)] backdrop-blur-xl">
                     <button
                         type="button"
-                        
+                        onClick={handleLogout}
                         className="group flex w-full items-center justify-center gap-3 rounded-full border border-white/30 bg-white/15 px-5 py-3 text-sm font-semibold text-emerald-50/95 transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/25"
                     >
                         <svg
