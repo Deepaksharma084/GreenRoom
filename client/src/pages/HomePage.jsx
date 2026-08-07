@@ -114,28 +114,32 @@ export default function HomePage() {
                         </button>
                     </div>
                 </div>
-                <div className="w-full max-w-md rounded-[1.5rem] border border-white/30 p-4 shadow-[0_12px_35px_rgba(3,34,20,0.2)] backdrop-blur-xl">
-                    <button
-                        type="button"
-                        onClick={handleLogout}
-                        className="group flex w-full items-center justify-center gap-3 rounded-full border border-white/30 bg-white/15 px-5 py-3 text-sm font-semibold text-emerald-50/95 transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/25"
-                    >
-                        <svg
-                            viewBox="0 0 24 24"
-                            className="h-5 w-5 text-red-500"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="2"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
+                {currentUser
+                    ?
+                    <div className="w-full max-w-md rounded-[1.5rem] border border-white/30 p-4 shadow-[0_12px_35px_rgba(3,34,20,0.2)] backdrop-blur-xl">
+                        <button
+                            type="button"
+                            onClick={handleLogout}
+                            className="group flex w-full items-center justify-center gap-3 rounded-full border border-white/30 bg-white/15 px-5 py-3 text-sm font-semibold text-emerald-50/95 transition-all duration-300 hover:-translate-y-0.5 hover:bg-white/25"
                         >
-                            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
-                            <path d="M16 17l5-5-5-5" />
-                            <path d="M21 12H9" />
-                        </svg>
-                        <span>Logout</span>
-                    </button>
-                </div>
+                            <svg
+                                viewBox="0 0 24 24"
+                                className="h-5 w-5 text-red-500"
+                                fill="none"
+                                stroke="currentColor"
+                                strokeWidth="2"
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                            >
+                                <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                                <path d="M16 17l5-5-5-5" />
+                                <path d="M21 12H9" />
+                            </svg>
+                            <span>Logout</span>
+                        </button>
+                    </div>
+                    : ""}
+
             </div>
         </div>
 
