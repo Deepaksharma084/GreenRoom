@@ -4,6 +4,7 @@ import LoginPage from './pages/LoginPage'
 import HomePage from './pages/HomePage'
 import CreateRoomPage from './pages/CreateRoomPage'
 import JoinRoomPage from './pages/JoinRoomPage'
+import MeetingPage from './pages/MeetingPage'
 
 export default function App() {
   return (
@@ -12,6 +13,7 @@ export default function App() {
       <Route path="/login" element={<LoginPage />} />
       <Route path="/create-room" element={<CreateRoomPage />} />
       <Route path="/join-room" element={<JoinRoomPage />} />
+      <Route path="/meeting/:roomId" element={<MeetingPage />} />
     </Routes>
   )
 }
