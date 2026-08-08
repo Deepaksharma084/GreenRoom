@@ -1,5 +1,8 @@
-export default function MeetingPage({ match }) {
-    const { roomId } = match.params;
+import { useParams } from 'react-router-dom'
+
+export default function MeetingPage() {
+    const { roomId } = useParams()
+    console.log('MeetingPage roomId:', roomId)
 
     return (
         <div>
