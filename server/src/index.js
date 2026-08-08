@@ -4,12 +4,15 @@ import path from "path";
 import { fileURLToPath } from 'url';
 import dotenv from 'dotenv';
 import cookieParser from "cookie-parser";
+import http from "http";
+import { Server } from "socket.io";
+
+import { initializeSocket } from "../socket/socketServer.js";
 
 dotenv.config();
 
 // Passport will now successfully find process.env variables upon import
 import passport from "../config/passport.js";
-import pool from '../db.js';
 import authRoutes from "../routes/authRoutes.js";
 import meetingRoutes from "../routes/meetingRoutes.js";
 
@@ -49,8 +52,20 @@ app.use(express.json());
 app.use("/auth", authRoutes);
 app.use("/meeting", meetingRoutes);
 
+//Http server and socket.io setup
+const server = http.createServer(app);
+const io = new Server(server, {
+    cors: {
+        origin: "http://localhost:5173",
+        credentials: true
+    }
+});
+
+// Initialize socket.io
+initializeSocket(io);
+
 const PORT = process.env.PORT || 5000;
 
-app.listen(PORT, () => {
+server.listen(PORT, () => {
     console.log(`Server is running on port ${PORT}`);
 });
