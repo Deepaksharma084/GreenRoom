@@ -10,7 +10,8 @@ export default defineConfig({
   ],
   server: {
     proxy: {
-      '/auth': 'http://localhost:5000'
+      '/auth': 'http://localhost:5000',
+      '/meeting': 'http://localhost:5000'
     }
   }
 })

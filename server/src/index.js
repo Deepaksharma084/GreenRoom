@@ -21,9 +21,6 @@ const __dirname = path.dirname(__filename);
 
 const app = express();
 
-app.use(passport.initialize());
-app.use(cookieParser());
-
 const allowedOrigins = [
     'http://localhost:5173'
 ];
@@ -42,12 +39,16 @@ const corsOptions = {
     allowedHeaders: ['Content-Type', 'Authorization', 'Cache-Control', 'Pragma', 'Expires']
 };
 
+app.use(cors(corsOptions));
+
+app.use(cookieParser());
+app.use(express.json());
+app.use(passport.initialize());
+
 app.get('/', (req, res) => {
     res.status(200).send('Server is alive and running!');
 });
 
-app.use(cors(corsOptions));
-app.use(express.json());
 
 app.use("/auth", authRoutes);
 app.use("/meeting", meetingRoutes);
