@@ -9,9 +9,17 @@ export default defineConfig({
     tailwindcss()
   ],
   server: {
+    host: true, //EXPOSES VITE TO THE MOBILE DEVICE ON THE WI-FI NETWORK
+    port: 5173,
     proxy: {
-      '/auth': 'http://localhost:5000',
-      '/meeting': 'http://localhost:5000'
+      '/auth': {
+        target: 'http://localhost:5000',
+        changeOrigin: true, //REWRITES HOST HEADER FOR PROXIED REQUESTS
+      },
+      '/meeting': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      }
     }
   }
 })

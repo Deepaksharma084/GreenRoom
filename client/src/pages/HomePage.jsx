@@ -56,7 +56,7 @@ export default function HomePage() {
 
     const handleLogout = async () => {
         try {
-            const response = await fetch(`${API_BASE_URL}/auth/logout`, {
+            const response = await fetch(`/auth/logout`, {
                 method: "POST",
                 credentials: "include",
             });
