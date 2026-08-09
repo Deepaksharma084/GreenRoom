@@ -1,9 +1,11 @@
 import { useEffect, useRef } from "react";
 
 export default function VideoTile({ stream, muted = false }) {
+
     const videoRef = useRef(null);
 
     useEffect(() => {
+
         if (!videoRef.current || !stream) {
             return;
         }

@@ -10,9 +10,9 @@ export default function useWebRTC(roomId) {
     useEffect(() => {
         let stream;
 
-        const initializeWebRTC = async () => {
+        const initialize = async () => {
             try {
-                // Get camera + microphone
+                //Get camera and microphone
                 stream = await navigator.mediaDevices.getUserMedia({
                     video: true,
                     audio: true
@@ -20,33 +20,33 @@ export default function useWebRTC(roomId) {
 
                 setLocalStream(stream);
 
-                // Connect Socket.IO
+                //Connect Socket.IO
                 socket.connect();
 
-                // Tell server which meeting we joined
+                //Join the Socket.IO room
                 socket.emit("join-room", roomId);
 
             } catch (error) {
                 console.error(
-                    "Failed to access camera/microphone:",
+                    "Error accessing camera/microphone:",
                     error
                 );
             }
         };
 
-        initializeWebRTC();
+        initialize();
 
         return () => {
-            // Stop camera and microphone
+            // Stop camera
             if (stream) {
-                stream.getTracks().forEach(track => {
+                stream.getTracks().forEach((track) => {
                     track.stop();
                 });
             }
 
-            // Close peer connections
+            // Close all peer connections
             Object.values(peerConnections.current).forEach(
-                peerConnection => {
+                (peerConnection) => {
                     peerConnection.close();
                 }
             );
@@ -55,6 +55,7 @@ export default function useWebRTC(roomId) {
 
             socket.disconnect();
         };
+
     }, [roomId]);
 
     return {
