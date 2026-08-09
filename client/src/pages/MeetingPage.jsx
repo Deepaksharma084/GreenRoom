@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import useWebRTC from "../hooks/useWebRTC.js";
+import useWebRTC from "/hooks/useWebRTC.js";
 import VideoGrid from "../components/VideoGrid.jsx";
 
 export default function MeetingPage() {
