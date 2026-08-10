@@ -66,9 +66,11 @@ export default function JoinRoomPage() {
                             <input
                                 type="text"
                                 placeholder="Enter meeting ID"
+                                autoCapitalize="characters"
                                 value={roomId}
                                 onChange={(event) => {
-                                    setRoomId(event.target.value);
+                                    //input to uppercase automatically
+                                    setRoomId(event.target.value.toUpperCase());
                                     if (errorMessage) {
                                         setErrorMessage('');
                                     }
