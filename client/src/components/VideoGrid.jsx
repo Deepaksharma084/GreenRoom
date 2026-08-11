@@ -4,11 +4,9 @@ export default function VideoGrid({
     localStream,
     remoteStreams
 }) {
-
     return (
         <div className="grid min-h-screen grid-cols-1 gap-4 bg-black p-4 md:grid-cols-2">
 
-            {/* Local video */}
             {localStream && (
                 <VideoTile
                     stream={localStream}
@@ -16,11 +14,10 @@ export default function VideoGrid({
                 />
             )}
 
-            {/* Remote videos */}
-            {remoteStreams.map((stream, index) => (
+            {remoteStreams.map((remote) => (
                 <VideoTile
-                    key={index}
-                    stream={stream}
+                    key={remote.socketId}
+                    stream={remote.stream}
                 />
             ))}
 
