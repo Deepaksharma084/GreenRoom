@@ -12,41 +12,68 @@ export const initializeSocket = (io) => {
                 `${socket.id} joined room ${roomId}`
             );
 
+            // Get everyone already inside the room
+            const room = io.sockets.adapter.rooms.get(roomId);
+
+            const existingUsers = room
+                ? [...room].filter((socketId) => socketId !== socket.id)
+                : [];
+
+            // Tell the new user who is already inside
+            socket.emit("existing-users", {
+                users: existingUsers
+            });
+
+            // Tell existing users about the new user
             socket.to(roomId).emit("user-joined", {
                 socketId: socket.id
             });
         });
 
-        socket.on("offer", ({ roomId, offer }) => {
+        // OFFER
+        socket.on("offer", ({ targetSocketId, offer }) => {
 
-            socket.to(roomId).emit("offer", {
+            io.to(targetSocketId).emit("offer", {
                 socketId: socket.id,
                 offer
             });
 
         });
 
-        socket.on("answer", ({ roomId, answer }) => {
+        // ANSWER
+        socket.on("answer", ({ targetSocketId, answer }) => {
 
-            socket.to(roomId).emit("answer", {
+            io.to(targetSocketId).emit("answer", {
                 socketId: socket.id,
                 answer
             });
 
         });
 
-        socket.on("ice-candidate", ({ roomId, candidate }) => {
+        // ICE CANDIDATE
+        socket.on(
+            "ice-candidate",
+            ({ targetSocketId, candidate }) => {
 
-            socket.to(roomId).emit("ice-candidate", {
-                socketId: socket.id,
-                candidate
-            });
+                io.to(targetSocketId).emit("ice-candidate", {
+                    socketId: socket.id,
+                    candidate
+                });
 
-        });
+            }
+        );
 
         socket.on("disconnect", () => {
 
-            console.log("Socket disconnected:", socket.id);
+            console.log(
+                "Socket disconnected:",
+                socket.id
+            );
+
+            // Tell everyone that this user left
+            socket.broadcast.emit("user-left", {
+                socketId: socket.id
+            });
 
         });
 
