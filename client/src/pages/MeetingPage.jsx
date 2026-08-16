@@ -1,14 +1,21 @@
 import { useParams } from "react-router-dom";
+import { useEffect} from "react";
 import useWebRTC from "/hooks/useWebRTC.js";
 import VideoGrid from "../components/VideoGrid.jsx";
+import MeetingControls from "../components/MeetingControls";
 
 export default function MeetingPage() {
     const { roomId } = useParams();
 
     const {
         localStream,
-        remoteStreams
+        remoteStreams,
+        isMicOn
     } = useWebRTC(roomId);
+
+    useEffect(() => {
+
+    }, []);
 
     return (
         <div className="min-h-screen bg-black">
@@ -16,6 +23,10 @@ export default function MeetingPage() {
                 localStream={localStream}
                 remoteStreams={remoteStreams}
             />
+            <MeetingControls
+                isMicOn={isMicOn}
+            />
+
         </div>
     );
 }
