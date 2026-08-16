@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import { useEffect} from "react";
+import { useEffect } from "react";
 import useWebRTC from "/hooks/useWebRTC.js";
 import VideoGrid from "../components/VideoGrid.jsx";
 import MeetingControls from "../components/MeetingControls";
@@ -10,7 +10,8 @@ export default function MeetingPage() {
     const {
         localStream,
         remoteStreams,
-        isMicOn
+        isMicOn,
+        toggleMicrophone
     } = useWebRTC(roomId);
 
     useEffect(() => {
@@ -25,6 +26,7 @@ export default function MeetingPage() {
             />
             <MeetingControls
                 isMicOn={isMicOn}
+                onToggleMicrophone={toggleMicrophone}
             />
 
         </div>

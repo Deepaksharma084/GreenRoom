@@ -10,6 +10,18 @@ export default function useWebRTC(roomId) {
     const peerConnections = useRef({});
     const localStreamRef = useRef(null);
 
+    const toggleMicrophone = () => {
+        if (!localStream) return;
+
+        const audioTracks = localStream.getAudioTracks();
+
+        audioTracks.forEach((track) => {
+            track.enabled = !track.enabled;
+        });
+
+        setIsMicOn(audioTracks.some((track) => track.enabled));
+    };
+
     useEffect(() => {
 
         const startMedia = async () => {
@@ -27,18 +39,6 @@ export default function useWebRTC(roomId) {
                 console.error("Failed to access camera/microphone:", error);
                 throw error;
             }
-        };
-
-        const toggleMicrophone = () => {
-            if (!localStream) return;
-
-            const audioTracks = localStream.getAudioTracks();
-
-            audioTracks.forEach((track) => {
-                track.enabled = !track.enabled;
-            });
-
-            setIsMicOn(audioTracks.some((track) => track.enabled));
         };
 
         let stream;
@@ -395,6 +395,7 @@ export default function useWebRTC(roomId) {
     return {
         localStream,
         remoteStreams,
-        isMicOn
+        isMicOn,
+        toggleMicrophone
     };
 }
