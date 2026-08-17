@@ -11,15 +11,26 @@ export default function useWebRTC(roomId) {
     const localStreamRef = useRef(null);
 
     const toggleMicrophone = () => {
-        if (!localStream) return;
+        const stream = localStreamRef.current;
 
-        const audioTracks = localStream.getAudioTracks();
+        if (!stream) return;
+
+        const audioTracks = stream.getAudioTracks();
+
+        if (audioTracks.length === 0) return;
+
+        const newMicState = !audioTracks[0].enabled;
 
         audioTracks.forEach((track) => {
-            track.enabled = !track.enabled;
+            track.enabled = newMicState;
         });
 
-        setIsMicOn(audioTracks.some((track) => track.enabled));
+        setIsMicOn(newMicState);
+
+        socket.emit("mic-status", {
+            roomId,
+            isMicOn: newMicState
+        });
     };
 
     useEffect(() => {
@@ -97,7 +108,8 @@ export default function useWebRTC(roomId) {
                         ...previousStreams,
                         {
                             socketId: remoteSocketId,
-                            stream: remoteStream
+                            stream: remoteStream,
+                            isMicOn: true
                         }
                     ];
 
@@ -301,6 +313,21 @@ export default function useWebRTC(roomId) {
             }
 
         };
+
+        socket.on("mic-status", ({ socketId, isMicOn }) => {
+
+            setRemoteStreams((prev) =>
+                prev.map((participant) =>
+                    participant.socketId === socketId
+                        ? {
+                            ...participant,
+                            isMicOn
+                        }
+                        : participant
+                )
+            );
+
+        });
 
         socket.on(
             "existing-users",

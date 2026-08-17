@@ -51,8 +51,7 @@ export const initializeSocket = (io) => {
         });
 
         // ICE CANDIDATE
-        socket.on(
-            "ice-candidate",
+        socket.on("ice-candidate",
             ({ targetSocketId, candidate }) => {
 
                 io.to(targetSocketId).emit("ice-candidate", {
@@ -62,6 +61,13 @@ export const initializeSocket = (io) => {
 
             }
         );
+
+        socket.on("mic-status", ({ roomId, isMicOn }) => {
+            socket.to(roomId).emit("mic-status", {
+                socketId: socket.id,
+                isMicOn
+            });
+        });
 
         socket.on("disconnect", () => {
 

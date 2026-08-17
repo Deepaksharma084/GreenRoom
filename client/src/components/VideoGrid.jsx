@@ -2,7 +2,8 @@ import VideoTile from "./VideoTile.jsx";
 
 export default function VideoGrid({
     localStream,
-    remoteStreams
+    remoteStreams,
+    isMicOn
 }) {
     return (
         <div className="grid min-h-screen grid-cols-1 gap-4 bg-black p-4 md:grid-cols-2">
@@ -11,13 +12,15 @@ export default function VideoGrid({
                 <VideoTile
                     stream={localStream}
                     muted={true}
+                    isMicOn={isMicOn}
                 />
             )}
 
-            {remoteStreams.map((remote) => (
+            {remoteStreams.map((participant) => (
                 <VideoTile
-                    key={remote.socketId}
-                    stream={remote.stream}
+                    key={participant.socketId}
+                    stream={participant.stream}
+                    isMicOn={participant.isMicOn}
                 />
             ))}
 
