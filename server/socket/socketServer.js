@@ -69,6 +69,13 @@ export const initializeSocket = (io) => {
             });
         });
 
+        socket.on("camera-status", ({ roomId, isCameraOn }) => {
+            socket.to(roomId).emit("camera-status", {
+                socketId: socket.id,
+                isCameraOn
+            });
+        });
+
         socket.on("disconnect", () => {
 
             console.log(
