@@ -6,6 +6,7 @@ export default function useWebRTC(roomId) {
     const [localStream, setLocalStream] = useState(null);
     const [remoteStreams, setRemoteStreams] = useState([]);
     const [isMicOn, setIsMicOn] = useState(true);
+    const [isCameraOn, setIsCameraOn] = useState(true);
 
     const peerConnections = useRef({});
     const localStreamRef = useRef(null);
@@ -30,6 +31,29 @@ export default function useWebRTC(roomId) {
         socket.emit("mic-status", {
             roomId,
             isMicOn: newMicState
+        });
+    };
+
+    const toggleCamera = () => {
+        const stream = localStreamRef.current;
+
+        if (!stream) return;
+
+        const videoTracks = stream.getVideoTracks();
+
+        if (videoTracks.length === 0) return;
+
+        const newCameraState = !videoTracks[0].enabled;
+
+        videoTracks.forEach((track) => {
+            track.enabled = newCameraState;
+        });
+
+        setIsCameraOn(newCameraState);
+
+        socket.emit("camera-status", {
+            roomId,
+            isCameraOn: newCameraState
         });
     };
 
@@ -109,7 +133,8 @@ export default function useWebRTC(roomId) {
                         {
                             socketId: remoteSocketId,
                             stream: remoteStream,
-                            isMicOn: true
+                            isMicOn: true,
+                            isCameraOn: true
                         }
                     ];
 
@@ -329,6 +354,19 @@ export default function useWebRTC(roomId) {
 
         });
 
+        socket.on("camera-status", ({ socketId, isCameraOn }) => {
+            setRemoteStreams((prev) =>
+                prev.map((participant) =>
+                    participant.socketId === socketId
+                        ? {
+                            ...participant,
+                            isCameraOn
+                        }
+                        : participant
+                )
+            );
+        });
+
         socket.on(
             "existing-users",
             handleExistingUsers
@@ -423,6 +461,8 @@ export default function useWebRTC(roomId) {
         localStream,
         remoteStreams,
         isMicOn,
-        toggleMicrophone
+        toggleMicrophone,
+        isCameraOn,
+        toggleCamera
     };
 }
