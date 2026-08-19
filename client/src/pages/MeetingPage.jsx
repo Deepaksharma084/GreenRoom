@@ -11,7 +11,9 @@ export default function MeetingPage() {
         localStream,
         remoteStreams,
         isMicOn,
-        toggleMicrophone
+        toggleMicrophone,
+        isCameraOn,
+        toggleCamera
     } = useWebRTC(roomId);
 
     useEffect(() => {
@@ -23,10 +25,14 @@ export default function MeetingPage() {
             <VideoGrid
                 localStream={localStream}
                 remoteStreams={remoteStreams}
+                isMicOn={isMicOn}
+                isCameraOn={isCameraOn}
             />
             <MeetingControls
                 isMicOn={isMicOn}
                 onToggleMicrophone={toggleMicrophone}
+                isCameraOn={isCameraOn}
+                onToggleCamera={toggleCamera}
             />
 
         </div>
