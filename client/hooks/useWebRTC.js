@@ -339,7 +339,7 @@ export default function useWebRTC(roomId) {
 
         };
 
-        socket.on("mic-status", ({ socketId, isMicOn }) => {
+        const handleMicStatus = ({ socketId, isMicOn }) => {
 
             setRemoteStreams((prev) =>
                 prev.map((participant) =>
@@ -352,9 +352,10 @@ export default function useWebRTC(roomId) {
                 )
             );
 
-        });
+        };
 
-        socket.on("camera-status", ({ socketId, isCameraOn }) => {
+        const handleCameraStatus = ({ socketId, isCameraOn }) => {
+
             setRemoteStreams((prev) =>
                 prev.map((participant) =>
                     participant.socketId === socketId
@@ -365,7 +366,8 @@ export default function useWebRTC(roomId) {
                         : participant
                 )
             );
-        });
+
+        };
 
         socket.on(
             "existing-users",
@@ -397,6 +399,16 @@ export default function useWebRTC(roomId) {
             handleUserLeft
         );
 
+        socket.on(
+            "mic-status",
+            handleMicStatus
+        );
+
+        socket.on(
+            "camera-status",
+            handleCameraStatus
+        );
+
         initializeWebRTC();
 
         return () => {
@@ -424,6 +436,16 @@ export default function useWebRTC(roomId) {
             socket.off(
                 "ice-candidate",
                 handleIceCandidate
+            );
+
+            socket.off(
+                "mic-status",
+                handleMicStatus
+            );
+
+            socket.off(
+                "camera-status",
+                handleCameraStatus
             );
 
             socket.off(
