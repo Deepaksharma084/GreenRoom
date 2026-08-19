@@ -59,23 +59,6 @@ export default function useWebRTC(roomId) {
 
     useEffect(() => {
 
-        const startMedia = async () => {
-            try {
-                const stream = await navigator.mediaDevices.getUserMedia({
-                    video: true,
-                    audio: true
-                });
-
-                setLocalStream(stream);
-                setIsMicOn(true);
-
-                return stream;
-            } catch (error) {
-                console.error("Failed to access camera/microphone:", error);
-                throw error;
-            }
-        };
-
         let stream;
 
         const createPeerConnection = (remoteSocketId) => {
