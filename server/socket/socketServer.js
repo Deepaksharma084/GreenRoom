@@ -1,33 +1,50 @@
 export const initializeSocket = (io) => {
 
+    const participants = new Map();
+
     io.on("connection", (socket) => {
 
         console.log("Socket connected:", socket.id);
 
-        socket.on("join-room", (roomId) => {
+        socket.on("join-room", ({ roomId, name }) => {
 
+            // Get participants already in the room
+            const roomParticipants =
+                participants.get(roomId) || new Map();
+
+            const existingUsers =
+                Array.from(roomParticipants.entries()).map(
+                    ([socketId, participant]) => ({
+                        socketId,
+                        name: participant.name
+                    })
+                );
+
+            // Store this participant
+            roomParticipants.set(socket.id, {
+                name
+            });
+
+            participants.set(roomId, roomParticipants);
+
+            // Join Socket.IO room
             socket.join(roomId);
 
             console.log(
-                `${socket.id} joined room ${roomId}`
+                `${name} (${socket.id}) joined room ${roomId}`
             );
 
-            // Get everyone already inside the room
-            const room = io.sockets.adapter.rooms.get(roomId);
-
-            const existingUsers = room
-                ? [...room].filter((socketId) => socketId !== socket.id)
-                : [];
-
-            // Tell the new user who is already inside
+            // Tells the new participant who is already there
             socket.emit("existing-users", {
                 users: existingUsers
             });
 
-            // Tell existing users about the new user
+            // Tells existing participants about the new participant
             socket.to(roomId).emit("user-joined", {
-                socketId: socket.id
+                socketId: socket.id,
+                name
             });
+
         });
 
         // OFFER

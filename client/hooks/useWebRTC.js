@@ -1,7 +1,7 @@
 import { useEffect, useRef, useState } from "react";
 import socket from "../socket/socket.js";
 
-export default function useWebRTC(roomId) {
+export default function useWebRTC(roomId, currentUser) {
 
     const [localStream, setLocalStream] = useState(null);
     const [remoteStreams, setRemoteStreams] = useState([]);
@@ -61,7 +61,7 @@ export default function useWebRTC(roomId) {
 
         let stream;
 
-        const createPeerConnection = (remoteSocketId) => {
+        const createPeerConnection = (remoteSocketId, remoteName) => {
 
             console.log("Creating peer connection with:", remoteSocketId);
 
@@ -116,6 +116,7 @@ export default function useWebRTC(roomId) {
                         {
                             socketId: remoteSocketId,
                             stream: remoteStream,
+                            name: remoteName,
                             isMicOn: true,
                             isCameraOn: true
                         }
@@ -151,13 +152,14 @@ export default function useWebRTC(roomId) {
             return peerConnection;
         };
 
-        const createOffer = async (remoteSocketId) => {
+        const createOffer = async (remoteSocketId, remoteName) => {
 
             console.log("🟡 createOffer() for:", remoteSocketId);
 
             const peerConnection = peerConnections.current[remoteSocketId] ||
                 createPeerConnection(
-                    remoteSocketId
+                    remoteSocketId,
+                    remoteName
                 );
 
             const offer = await peerConnection.createOffer();
@@ -176,17 +178,27 @@ export default function useWebRTC(roomId) {
 
             console.log("🟢 EXISTING USERS:", users);
 
-            for (const remoteSocketId of users) {
-                console.log("🟢 Creating offer for:", remoteSocketId);
-                await createOffer(remoteSocketId);
+            for (const user of users) {
 
+                console.log(
+                    "🟢 Creating offer for:",
+                    user.socketId
+                );
+
+                await createOffer(
+                    user.socketId,
+                    user.name
+                );
             }
-
         };
 
-        const handleUserJoined = ({ socketId }) => {
+        const handleUserJoined = ({ socketId, name }) => {
 
-            console.log("New user joined:", socketId);
+            console.log(
+                "New user joined:",
+                name,
+                socketId
+            );
 
         };
 
@@ -312,7 +324,10 @@ export default function useWebRTC(roomId) {
 
                 socket.connect();
 
-                socket.emit("join-room", roomId);
+                socket.emit("join-room", {
+                    roomId,
+                    name: currentUserName.name
+                });
 
             } catch (error) {
 
@@ -460,7 +475,7 @@ export default function useWebRTC(roomId) {
 
         };
 
-    }, [roomId]);
+    }, [roomId, currentUser]);
 
     return {
         localStream,

@@ -14,7 +14,7 @@ export default function MeetingPage() {
         toggleMicrophone,
         isCameraOn,
         toggleCamera
-    } = useWebRTC(roomId);
+    } = useWebRTC(roomId, currentUser.name);
 
     useEffect(() => {
 
