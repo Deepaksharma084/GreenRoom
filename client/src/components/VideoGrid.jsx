@@ -12,6 +12,7 @@ export default function VideoGrid({
             {localStream && (
                 <VideoTile
                     stream={localStream}
+                    name={currentUser.name}
                     muted={true}
                     isMicOn={isMicOn}
                     isCameraOn={isCameraOn}
@@ -22,6 +23,7 @@ export default function VideoGrid({
                 <VideoTile
                     key={participant.socketId}
                     stream={participant.stream}
+                    name={participant.name}
                     isMicOn={participant.isMicOn}
                     isCameraOn={participant.isCameraOn}
                 />

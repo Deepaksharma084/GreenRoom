@@ -3,6 +3,7 @@ import { useEffect, useRef } from "react";
 export default function VideoTile({
     stream,
     muted = false,
+    name,
     isMicOn,
     isCameraOn
 }) {
@@ -37,6 +38,10 @@ export default function VideoTile({
                     </div>
                 </div>
             )}
+
+            <div className="absolute top-3 left-3 rounded-full bg-black/70 px-3 py-2 text-lg text-white">
+                {name}
+            </div>
 
             <div className="absolute bottom-3 left-3 rounded-full bg-black/70 px-3 py-2 text-sm text-white">
                 {isCameraOn ? "📹" : "📹 Off"}
