@@ -326,7 +326,7 @@ export default function useWebRTC(roomId, currentUser) {
 
                 socket.emit("join-room", {
                     roomId,
-                    name: currentUserName.name
+                    name: currentUser
                 });
 
             } catch (error) {

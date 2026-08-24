@@ -4,7 +4,8 @@ export default function VideoGrid({
     localStream,
     remoteStreams,
     isMicOn,
-    isCameraOn
+    isCameraOn,
+    currentUser
 }) {
     return (
         <div className="grid min-h-screen grid-cols-1 gap-4 bg-black p-4 md:grid-cols-2">
@@ -12,7 +13,7 @@ export default function VideoGrid({
             {localStream && (
                 <VideoTile
                     stream={localStream}
-                    name={currentUser.name}
+                    name={currentUser}
                     muted={true}
                     isMicOn={isMicOn}
                     isCameraOn={isCameraOn}

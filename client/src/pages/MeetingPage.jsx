@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { API_BASE_URL } from "../config.js";
 import useWebRTC from "/hooks/useWebRTC.js";
+import { getCurrentUser } from "/utils/getCurrentUser.js";
 import VideoGrid from "../components/VideoGrid.jsx";
 import MeetingControls from "../components/MeetingControls.jsx";
 
@@ -13,49 +13,24 @@ export default function MeetingPage() {
     const [currentUser, setCurrentUser] = useState(null);
     const [loading, setLoading] = useState(true);
 
-    // Get current authenticated user
     useEffect(() => {
 
-        const getCurrentUser = async () => {
+        const loadUser = async () => {
 
-            try {
+            const user = await getCurrentUser();
 
-                const response = await fetch(
-                    `${API_BASE_URL}/auth/me`,
-                    {
-                        credentials: "include"
-                    }
-                );
-
-                if (!response.ok) {
-                    navigate("/login");
-                    return;
-                }
-
-                const data = await response.json();
-
-                setCurrentUser(data.user);
-
-            } catch (error) {
-
-                console.error(
-                    "Failed to get current user:",
-                    error
-                );
-
+            if (!user) {
                 navigate("/login");
-
-            } finally {
-
-                setLoading(false);
-
+                return;
             }
+
+            setCurrentUser(user);
+            setLoading(false);
         };
 
-        getCurrentUser();
+        loadUser();
 
     }, [navigate]);
-
 
     // Don't start WebRTC until currentUser exists
     if (loading) {
