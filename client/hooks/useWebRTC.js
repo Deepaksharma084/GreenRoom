@@ -242,18 +242,20 @@ export default function useWebRTC(roomId, currentUser) {
 
             console.log("🟣 ANSWER RECEIVED FROM:", socketId);
 
-            const peerConnection = peerConnections.current[socketId];
+            const peerConnection =
+                peerConnections.current[socketId];
 
             if (!peerConnection) {
-                console.error("❌ No peer connection for:", socketId);
+                console.error(
+                    "❌ No peer connection for:",
+                    socketId
+                );
                 return;
             }
 
-            // await peerConnection.setRemoteDescription(
-            //     new RTCSessionDescription(
-            //         answer
-            //     )
-            // );
+            await peerConnection.setRemoteDescription(
+                new RTCSessionDescription(answer)
+            );
 
         };
 
