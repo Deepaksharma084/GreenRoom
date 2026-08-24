@@ -249,11 +249,11 @@ export default function useWebRTC(roomId, currentUser) {
                 return;
             }
 
-            await peerConnection.setRemoteDescription(
-                new RTCSessionDescription(
-                    answer
-                )
-            );
+            // await peerConnection.setRemoteDescription(
+            //     new RTCSessionDescription(
+            //         answer
+            //     )
+            // );
 
         };
 
@@ -324,10 +324,16 @@ export default function useWebRTC(roomId, currentUser) {
 
                 socket.connect();
 
-                socket.emit("join-room", {
-                    roomId,
-                    name: currentUser
-                });
+                const handleConnect = () => {
+                    console.log("Socket connected:", socket.id);
+
+                    socket.emit("join-room", {
+                        roomId,
+                        name: currentUser
+                    });
+                };
+
+                socket.on("connect", handleConnect);
 
             } catch (error) {
 
@@ -410,6 +416,10 @@ export default function useWebRTC(roomId, currentUser) {
         initializeWebRTC();
 
         return () => {
+
+            socket.off("connect",
+                handleConnect
+            );
 
             socket.off(
                 "existing-users",
