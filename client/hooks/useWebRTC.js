@@ -324,18 +324,18 @@ export default function useWebRTC(roomId, currentUser) {
 
                 setLocalStream(stream);
 
-                socket.connect();
-
                 const handleConnect = () => {
                     console.log("Socket connected:", socket.id);
 
                     socket.emit("join-room", {
                         roomId,
-                        name: currentUser
+                        name: currentUser.name
                     });
                 };
 
                 socket.on("connect", handleConnect);
+
+                socket.connect();
 
             } catch (error) {
 
