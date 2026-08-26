@@ -310,40 +310,35 @@ export default function useWebRTC(roomId, currentUser) {
 
         };
 
+        const handleConnect = () => {
+            console.log("Socket connected:", socket.id);
+
+            socket.emit("join-room", {
+                roomId,
+                name: currentUser.name
+            });
+        };
+
         const initializeWebRTC = async () => {
-
             try {
-
-                stream = await navigator.mediaDevices
-                    .getUserMedia({
-                        video: true,
-                        audio: true
-                    });
+                stream = await navigator.mediaDevices.getUserMedia({
+                    video: true,
+                    audio: true
+                });
 
                 localStreamRef.current = stream;
-
                 setLocalStream(stream);
-
-                const handleConnect = () => {
-                    console.log("Socket connected:", socket.id);
-
-                    socket.emit("join-room", {
-                        roomId,
-                        name: currentUser.name
-                    });
-                };
-
-                socket.on("connect", handleConnect);
 
                 socket.connect();
 
             } catch (error) {
-
                 console.error("Camera/microphone error:", error);
-
             }
-
         };
+
+        socket.on("connect", handleConnect);
+
+        initializeWebRTC();
 
         const handleMicStatus = ({ socketId, isMicOn }) => {
 
