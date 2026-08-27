@@ -23,15 +23,15 @@ export default function VideoTile({
     return (
         <div className="relative h-full w-full overflow-hidden rounded-xl bg-zinc-900">
 
-            {isCameraOn ? (
-                <video
-                    ref={videoRef}
-                    autoPlay
-                    playsInline
-                    muted={muted}
-                    className="h-full w-full object-cover"
-                />
-            ) : (
+            <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted={muted}
+                className={`h-full w-full object-cover ${isCameraOn ? "" : "hidden"}`}
+            />
+
+            {!isCameraOn && (
                 <div className="flex h-full w-full items-center justify-center">
                     <div className="flex h-20 w-20 items-center justify-center rounded-full bg-emerald-900 text-3xl font-semibold text-white">
                         ?
