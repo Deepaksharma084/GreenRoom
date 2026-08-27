@@ -16,7 +16,19 @@ export default defineConfig({
         target: 'http://localhost:5000',
         changeOrigin: true, //REWRITES HOST HEADER FOR PROXIED REQUESTS
       },
-      '/meeting': {
+      '/meeting/create': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+      '/meeting/join': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+      '/meeting/leave': {
+        target: 'http://localhost:5000',
+        changeOrigin: true,
+      },
+      '/meeting/history': {
         target: 'http://localhost:5000',
         changeOrigin: true,
       }
