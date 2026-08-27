@@ -65,7 +65,7 @@ function MeetingContent({ roomId, currentUser }) {
         toggleCamera
     } = useWebRTC(
         roomId,
-        currentUser.name
+        currentUser
     );
 
     return (

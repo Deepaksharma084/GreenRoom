@@ -59,6 +59,7 @@ export default function useWebRTC(roomId, currentUser) {
 
     useEffect(() => {
 
+        let isMounted = true;
         let stream;
 
         const createPeerConnection = (remoteSocketId, remoteName) => {
@@ -325,10 +326,19 @@ export default function useWebRTC(roomId, currentUser) {
                     audio: true
                 });
 
+                // If component unmounted while waiting for media, clean up
+                if (!isMounted) {
+                    stream.getTracks().forEach((track) => track.stop());
+                    return;
+                }
+
                 localStreamRef.current = stream;
                 setLocalStream(stream);
 
-                socket.connect();
+                // Only connect if not already connected
+                if (!socket.connected) {
+                    socket.connect();
+                }
 
             } catch (error) {
                 console.error("Camera/microphone error:", error);
@@ -410,6 +420,8 @@ export default function useWebRTC(roomId, currentUser) {
         );
 
         return () => {
+
+            isMounted = false;
 
             socket.off("connect",
                 handleConnect
