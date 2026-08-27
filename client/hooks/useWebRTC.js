@@ -209,8 +209,7 @@ export default function useWebRTC(roomId, currentUser) {
             let peerConnection = peerConnections.current[socketId];
 
             if (!peerConnection) {
-
-                peerConnection = createPeerConnection(socketId);
+                peerConnection = createPeerConnection(socketId)
             }
 
             await peerConnection.setRemoteDescription(
@@ -409,8 +408,6 @@ export default function useWebRTC(roomId, currentUser) {
             "camera-status",
             handleCameraStatus
         );
-
-        initializeWebRTC();
 
         return () => {
 
