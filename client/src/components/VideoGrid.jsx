@@ -7,13 +7,32 @@ export default function VideoGrid({
     isCameraOn,
     currentUser
 }) {
+    const totalParticipants = (localStream ? 1 : 0) + remoteStreams.length;
+
+    // Responsive grid classes based on participant count
+    const getGridClasses = () => {
+        if (totalParticipants <= 1) {
+            return "grid-cols-1";
+        }
+        if (totalParticipants === 2) {
+            return "grid-cols-1 md:grid-cols-2";
+        }
+        if (totalParticipants <= 4) {
+            return "grid-cols-1 sm:grid-cols-2";
+        }
+        // 5+ participants
+        return "grid-cols-1 sm:grid-cols-2 lg:grid-cols-3";
+    };
+
     return (
-        <div className="grid min-h-screen grid-cols-1 gap-4 bg-black p-4 md:grid-cols-2">
+        <div
+            className={`grid min-h-screen gap-2 bg-black p-2 pb-24 ${getGridClasses()}`}
+        >
 
             {localStream && (
                 <VideoTile
                     stream={localStream}
-                    name={currentUser}
+                    name={currentUser?.name || "You"}
                     muted={true}
                     isMicOn={isMicOn}
                     isCameraOn={isCameraOn}

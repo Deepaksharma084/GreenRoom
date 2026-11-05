@@ -1,6 +1,7 @@
 export const initializeSocket = (io) => {
 
     const participants = new Map();
+    const socketRoomMap = new Map();
 
     io.on("connection", (socket) => {
 
@@ -26,6 +27,7 @@ export const initializeSocket = (io) => {
             });
 
             participants.set(roomId, roomParticipants);
+            socketRoomMap.set(socket.id, roomId);
 
             // Join Socket.IO room
             socket.join(roomId);
@@ -47,12 +49,17 @@ export const initializeSocket = (io) => {
 
         });
 
-        // OFFER
+        // OFFER — include sender name so receiver can associate the peer
         socket.on("offer", ({ targetSocketId, offer }) => {
+
+            const roomId = socketRoomMap.get(socket.id);
+            const roomParticipants = participants.get(roomId);
+            const senderName = roomParticipants?.get(socket.id)?.name || "Unknown";
 
             io.to(targetSocketId).emit("offer", {
                 socketId: socket.id,
-                offer
+                offer,
+                name: senderName
             });
 
         });
@@ -100,10 +107,27 @@ export const initializeSocket = (io) => {
                 socket.id
             );
 
-            // Tell everyone that this user left
-            socket.broadcast.emit("user-left", {
-                socketId: socket.id
-            });
+            const roomId = socketRoomMap.get(socket.id);
+
+            if (roomId) {
+                const roomParticipants = participants.get(roomId);
+
+                if (roomParticipants) {
+                    roomParticipants.delete(socket.id);
+
+                    // Clean up empty rooms
+                    if (roomParticipants.size === 0) {
+                        participants.delete(roomId);
+                    }
+                }
+
+                // Notify only participants in the same room
+                socket.to(roomId).emit("user-left", {
+                    socketId: socket.id
+                });
+
+                socketRoomMap.delete(socket.id);
+            }
 
         });
 

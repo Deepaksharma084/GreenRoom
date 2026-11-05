@@ -20,7 +20,6 @@ router.get(
     })
 );
 
-// Step 2: Google redirects here
 router.get(
     "/google/callback",
     passport.authenticate("google", {

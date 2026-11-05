@@ -4,6 +4,7 @@ import useWebRTC from "/hooks/useWebRTC.js";
 import { getCurrentUser } from "/utils/getCurrentUser.js";
 import VideoGrid from "../components/VideoGrid.jsx";
 import MeetingControls from "../components/MeetingControls.jsx";
+import ParticipantsPanel from "../components/ParticipantsPanel.jsx";
 
 export default function MeetingPage() {
 
@@ -56,26 +57,39 @@ export default function MeetingPage() {
 
 function MeetingContent({ roomId, currentUser }) {
 
+    const navigate = useNavigate();
+    const [showParticipants, setShowParticipants] = useState(false);
+
     const {
         localStream,
         remoteStreams,
         isMicOn,
         toggleMicrophone,
         isCameraOn,
-        toggleCamera
+        toggleCamera,
+        isScreenSharing,
+        startScreenShare,
+        stopScreenShare,
+        handleLeave
     } = useWebRTC(
         roomId,
         currentUser
     );
 
+    const onLeave = () => {
+        handleLeave();
+        navigate("/");
+    };
+
     return (
-        <div className="min-h-screen bg-black">
+        <div className="relative min-h-screen bg-black">
 
             <VideoGrid
                 localStream={localStream}
                 remoteStreams={remoteStreams}
                 isMicOn={isMicOn}
                 isCameraOn={isCameraOn}
+                currentUser={currentUser}
             />
 
             <MeetingControls
@@ -83,7 +97,23 @@ function MeetingContent({ roomId, currentUser }) {
                 onToggleMicrophone={toggleMicrophone}
                 isCameraOn={isCameraOn}
                 onToggleCamera={toggleCamera}
+                isScreenSharing={isScreenSharing}
+                onStartScreenShare={startScreenShare}
+                onStopScreenShare={stopScreenShare}
+                onToggleParticipants={() => setShowParticipants((prev) => !prev)}
+                participantCount={1 + remoteStreams.length}
+                onLeave={onLeave}
             />
+
+            {showParticipants && (
+                <ParticipantsPanel
+                    localUser={currentUser}
+                    isMicOn={isMicOn}
+                    isCameraOn={isCameraOn}
+                    remoteStreams={remoteStreams}
+                    onClose={() => setShowParticipants(false)}
+                />
+            )}
 
         </div>
     );
