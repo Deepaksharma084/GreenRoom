@@ -7,14 +7,13 @@ import cookieParser from "cookie-parser";
 import http from "http";
 import { Server } from "socket.io";
 
-import { initializeSocket } from "../socket/socketServer.js";
-
 dotenv.config();
 
-// Passport will now successfully find process.env variables upon import
+import { initializeSocket } from "../socket/socketServer.js";
 import passport from "../config/passport.js";
 import authRoutes from "../routes/authRoutes.js";
 import meetingRoutes from "../routes/meetingRoutes.js";
+import { createRateLimiter } from "../middleware/rateLimiter.js";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -23,8 +22,9 @@ const app = express();
 
 const allowedOrigins = [
     'http://localhost:5173',
-    'http://192.168.1.6:5173'
-];
+    'http://192.168.1.6:5173',
+    process.env.CLIENT_URL
+].filter(Boolean);
 
 const corsOptions = {
     origin: function (origin, callback) {
@@ -41,30 +41,37 @@ const corsOptions = {
 };
 
 app.use(cors(corsOptions));
-
 app.use(cookieParser());
 app.use(express.json());
 app.use(passport.initialize());
+
+// Phase 27: Rate limiting against DDoS and brute-force
+const apiLimiter = createRateLimiter({
+    windowMs: 60000,
+    max: 120,
+    message: "Too many requests. Please slow down."
+});
+app.use(apiLimiter);
 
 app.get('/', (req, res) => {
     res.status(200).send('Server is alive and running!');
 });
 
-
 app.use("/auth", authRoutes);
 app.use("/meeting", meetingRoutes);
 
-//Http server and socket.io setup
+// Http server and socket.io setup
 const server = http.createServer(app);
 const io = new Server(server, {
     cors: {
-        origin: ["http://localhost:5173", "http://192.168.1.6:5173"],
+        origin: allowedOrigins,
         credentials: true
     }
 });
 
 // Initialize socket.io
 initializeSocket(io);
+app.set("io", io);
 
 const PORT = process.env.PORT || 5000;
 

@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import socket from "../socket/socket.js";
+import { getIceServers } from "../src/utils/iceConfig.js";
 
 export default function useWebRTC(roomId, currentUser) {
 
@@ -8,23 +9,25 @@ export default function useWebRTC(roomId, currentUser) {
     const [isMicOn, setIsMicOn] = useState(true);
     const [isCameraOn, setIsCameraOn] = useState(true);
     const [isScreenSharing, setIsScreenSharing] = useState(false);
+    const [mediaError, setMediaError] = useState(null);
+    const [isMeetingEnded, setIsMeetingEnded] = useState(false);
+    const [connectionStatus, setConnectionStatus] = useState("disconnected");
 
     const peerConnections = useRef({});
+    const peerNames = useRef({});
     const localStreamRef = useRef(null);
     const pendingCandidates = useRef({});
     const screenStreamRef = useRef(null);
+    const iceServersRef = useRef([{ urls: "stun:stun.l.google.com:19302" }]);
 
     const toggleMicrophone = () => {
         const stream = localStreamRef.current;
-
         if (!stream) return;
 
         const audioTracks = stream.getAudioTracks();
-
         if (audioTracks.length === 0) return;
 
         const newMicState = !audioTracks[0].enabled;
-
         audioTracks.forEach((track) => {
             track.enabled = newMicState;
         });
@@ -39,15 +42,12 @@ export default function useWebRTC(roomId, currentUser) {
 
     const toggleCamera = () => {
         const stream = localStreamRef.current;
-
         if (!stream) return;
 
         const videoTracks = stream.getVideoTracks();
-
         if (videoTracks.length === 0) return;
 
         const newCameraState = !videoTracks[0].enabled;
-
         videoTracks.forEach((track) => {
             track.enabled = newCameraState;
         });
@@ -79,12 +79,21 @@ export default function useWebRTC(roomId, currentUser) {
         // Close all peer connections
         Object.values(peerConnections.current).forEach((pc) => pc.close());
         peerConnections.current = {};
+        peerNames.current = {};
         pendingCandidates.current = {};
 
         setRemoteStreams([]);
 
         // Disconnect socket
         socket.disconnect();
+        setConnectionStatus("disconnected");
+    };
+
+    // Host Ends Meeting for Everyone
+    const handleEndMeeting = () => {
+        socket.emit("end-meeting", { roomId });
+        handleLeave();
+        setIsMeetingEnded(true);
     };
 
     // Replace camera track with screen track on all peer connections
@@ -143,58 +152,59 @@ export default function useWebRTC(roomId, currentUser) {
     };
 
     useEffect(() => {
-
         let isMounted = true;
         let stream;
 
         const createPeerConnection = (remoteSocketId, remoteName) => {
+            if (remoteName) {
+                peerNames.current[remoteSocketId] = remoteName;
+            }
 
-            console.log("Creating peer connection with:", remoteSocketId);
-
-            const peerConnection =
-                new RTCPeerConnection({
-                    iceServers: [
-                        {
-                            urls: "stun:stun.l.google.com:19302"
-                        }
-                    ]
-                });
-
-            // Add local camera + microphone
-            stream.getTracks().forEach((track) => {
-
-                peerConnection.addTrack(
-                    track,
-                    stream
-                );
-
+            const peerConnection = new RTCPeerConnection({
+                iceServers: iceServersRef.current
             });
+
+            // Add local camera + microphone if available
+            if (stream) {
+                stream.getTracks().forEach((track) => {
+                    peerConnection.addTrack(track, stream);
+                });
+            }
+
+            // Phase 12: WebRTC Connection State Handling
+            peerConnection.onconnectionstatechange = () => {
+                const state = peerConnection.connectionState;
+
+                if (state === "failed" || state === "closed") {
+                    peerConnection.close();
+                    delete peerConnections.current[remoteSocketId];
+                    delete peerNames.current[remoteSocketId];
+                    delete pendingCandidates.current[remoteSocketId];
+
+                    setRemoteStreams((previousStreams) =>
+                        previousStreams.filter((item) => item.socketId !== remoteSocketId)
+                    );
+                }
+            };
 
             // Receive remote stream
             peerConnection.ontrack = (event) => {
-
-                console.log("🔥 REMOTE TRACK RECEIVED FROM:", remoteSocketId, event.streams);
-
                 const [remoteStream] = event.streams;
-
                 if (!remoteStream) {
-                    console.error("❌ No remote stream");
                     return;
                 }
 
-                console.log("Received remote stream from:", remoteSocketId);
+                const displayName = peerNames.current[remoteSocketId] || remoteName || "Participant";
 
                 setRemoteStreams((previousStreams) => {
-
-                    const existing =
-                        previousStreams.find((item) =>
-                            item.socketId === remoteSocketId
-                        );
+                    const existing = previousStreams.find((item) => item.socketId === remoteSocketId);
 
                     if (existing) {
-
-                        return previousStreams;
-
+                        return previousStreams.map((item) =>
+                            item.socketId === remoteSocketId
+                                ? { ...item, stream: remoteStream, name: displayName }
+                                : item
+                        );
                     }
 
                     return [
@@ -202,108 +212,58 @@ export default function useWebRTC(roomId, currentUser) {
                         {
                             socketId: remoteSocketId,
                             stream: remoteStream,
-                            name: remoteName,
+                            name: displayName,
                             isMicOn: true,
                             isCameraOn: true
                         }
                     ];
-
                 });
-
             };
 
             // ICE candidate
-            peerConnection.onicecandidate = (
-                event
-            ) => {
-
-                if (!event.candidate) {
-                    return;
-                }
-
-                console.log("🧊 Sending ICE to:", remoteSocketId);
+            peerConnection.onicecandidate = (event) => {
+                if (!event.candidate) return;
 
                 socket.emit("ice-candidate", {
-
                     targetSocketId: remoteSocketId,
-
                     candidate: event.candidate
-
                 });
-
             };
 
             peerConnections.current[remoteSocketId] = peerConnection;
-
             return peerConnection;
         };
 
         const createOffer = async (remoteSocketId, remoteName) => {
-
-            console.log("🟡 createOffer() for:", remoteSocketId);
-
-            const peerConnection = peerConnections.current[remoteSocketId] ||
-                createPeerConnection(
-                    remoteSocketId,
-                    remoteName
-                );
+            const peerConnection =
+                peerConnections.current[remoteSocketId] ||
+                createPeerConnection(remoteSocketId, remoteName);
 
             const offer = await peerConnection.createOffer();
-
-            await peerConnection.setLocalDescription(
-                offer
-            );
-
-            console.log("🟡 Sending OFFER to:", remoteSocketId);
+            await peerConnection.setLocalDescription(offer);
 
             socket.emit("offer", { targetSocketId: remoteSocketId, offer });
-
         };
 
         const handleExistingUsers = async ({ users }) => {
-
-            console.log("🟢 EXISTING USERS:", users);
-
             for (const user of users) {
-
-                console.log(
-                    "🟢 Creating offer for:",
-                    user.socketId
-                );
-
-                await createOffer(
-                    user.socketId,
-                    user.name
-                );
+                await createOffer(user.socketId, user.name);
             }
         };
 
         const handleUserJoined = ({ socketId, name }) => {
-
-            console.log(
-                "New user joined:",
-                name,
-                socketId
-            );
-
+            peerNames.current[socketId] = name;
         };
 
-        // Server now relays the sender's name alongside the offer
         const handleOffer = async ({ socketId, offer, name }) => {
-
-            console.log("🔵 OFFER RECEIVED FROM:", socketId, name);
-
             let peerConnection = peerConnections.current[socketId];
-
             if (!peerConnection) {
                 peerConnection = createPeerConnection(socketId, name);
+            } else if (name) {
+                peerNames.current[socketId] = name;
             }
 
-            await peerConnection.setRemoteDescription(
-                new RTCSessionDescription(
-                    offer
-                )
-            );
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(offer));
 
             // Flush any pending ICE candidates for this peer
             if (pendingCandidates.current[socketId]) {
@@ -317,43 +277,23 @@ export default function useWebRTC(roomId, currentUser) {
                 delete pendingCandidates.current[socketId];
             }
 
-            console.log("🔵 Remote description set");
-
             const answer = await peerConnection.createAnswer();
-
-            await peerConnection.setLocalDescription(
-                answer
-            );
-
-            console.log("🔵 Sending ANSWER to:", socketId);
+            await peerConnection.setLocalDescription(answer);
 
             socket.emit("answer", {
-
                 targetSocketId: socketId,
                 answer
-
             });
-
         };
 
         const handleAnswer = async ({ socketId, answer }) => {
-
-            console.log("🟣 ANSWER RECEIVED FROM:", socketId);
-
-            const peerConnection =
-                peerConnections.current[socketId];
+            const peerConnection = peerConnections.current[socketId];
 
             if (!peerConnection) {
-                console.error(
-                    "❌ No peer connection for:",
-                    socketId
-                );
                 return;
             }
 
-            await peerConnection.setRemoteDescription(
-                new RTCSessionDescription(answer)
-            );
+            await peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
 
             // Flush any pending ICE candidates for this peer
             if (pendingCandidates.current[socketId]) {
@@ -366,12 +306,10 @@ export default function useWebRTC(roomId, currentUser) {
                 }
                 delete pendingCandidates.current[socketId];
             }
-
         };
 
         // Queue ICE candidates that arrive before remote description is set
         const handleIceCandidate = async ({ socketId, candidate }) => {
-
             const peerConnection = peerConnections.current[socketId];
 
             if (!peerConnection || !peerConnection.remoteDescription) {
@@ -379,48 +317,36 @@ export default function useWebRTC(roomId, currentUser) {
                     pendingCandidates.current[socketId] = [];
                 }
                 pendingCandidates.current[socketId].push(candidate);
-                console.log("🧊 ICE candidate queued for:", socketId);
                 return;
             }
 
             try {
-                await peerConnection.addIceCandidate(
-                    new RTCIceCandidate(candidate)
-                );
+                await peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
             } catch (error) {
                 console.error("Error adding ICE candidate:", error);
             }
-
         };
 
         const handleUserLeft = ({ socketId }) => {
-
             console.log("User left:", socketId);
-
             const peerConnection = peerConnections.current[socketId];
 
             if (peerConnection) {
-
                 peerConnection.close();
-
                 delete peerConnections.current[socketId];
-
             }
 
+            delete peerNames.current[socketId];
             delete pendingCandidates.current[socketId];
 
-            setRemoteStreams(
-                (previousStreams) =>
-                    previousStreams.filter(
-                        (item) =>
-                            item.socketId !== socketId
-                    )
+            setRemoteStreams((previousStreams) =>
+                previousStreams.filter((item) => item.socketId !== socketId)
             );
-
         };
 
         const handleConnect = () => {
             console.log("Socket connected:", socket.id);
+            setConnectionStatus("connected");
 
             socket.emit("join-room", {
                 roomId,
@@ -428,177 +354,151 @@ export default function useWebRTC(roomId, currentUser) {
             });
         };
 
+        const handleDisconnect = () => {
+            console.log("Socket disconnected");
+            setConnectionStatus("disconnected");
+        };
+
+        const handleConnectError = (err) => {
+            console.error("Socket connection error:", err.message);
+            setConnectionStatus("error");
+            setMediaError(`Connection error: ${err.message}`);
+        };
+
+        // Phase 22: Meeting Ended by Host
+        const handleMeetingEnded = () => {
+            console.log("Meeting ended by host");
+            handleLeave();
+            setIsMeetingEnded(true);
+        };
+
+        // Phase 15 & 16: Device & Permission Handling with progressive fallback
         const initializeWebRTC = async () => {
+            setConnectionStatus("connecting");
+
+            // Phase 26: Load production ICE servers (TURN/STUN)
             try {
+                const configuredIce = await getIceServers();
+                if (configuredIce && isMounted) {
+                    iceServersRef.current = configuredIce;
+                }
+            } catch (iceErr) {
+                console.warn("Failed to load ICE servers:", iceErr);
+            }
+            try {
+                // Try dual video + audio
                 stream = await navigator.mediaDevices.getUserMedia({
                     video: true,
                     audio: true
                 });
+            } catch (firstErr) {
+                console.warn("Dual track acquisition failed, trying audio-only / video-only:", firstErr.name);
 
-                // If component unmounted while waiting for media, clean up
-                if (!isMounted) {
-                    stream.getTracks().forEach((track) => track.stop());
-                    return;
+                // Try audio-only
+                try {
+                    stream = await navigator.mediaDevices.getUserMedia({ video: false, audio: true });
+                    setIsCameraOn(false);
+                    setMediaError("Camera is unavailable or permission denied. Joined with microphone only.");
+                } catch {
+                    // Try video-only
+                    try {
+                        stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+                        setIsMicOn(false);
+                        setMediaError("Microphone is unavailable or permission denied. Joined with camera only.");
+                    } catch (finalErr) {
+                        console.error("Media permission completely denied or device not found:", finalErr);
+                        setIsCameraOn(false);
+                        setIsMicOn(false);
+
+                        if (finalErr.name === "NotAllowedError") {
+                            setMediaError("Camera and microphone access were denied. Joined in listen-only mode.");
+                        } else if (finalErr.name === "NotFoundError") {
+                            setMediaError("No camera or microphone found on this device.");
+                        } else {
+                            setMediaError("Unable to access media devices: " + (finalErr.message || finalErr.name));
+                        }
+
+                        // Create an empty MediaStream so the user can still connect and view others
+                        stream = new MediaStream();
+                    }
                 }
+            }
 
-                localStreamRef.current = stream;
-                setLocalStream(stream);
+            if (!isMounted) {
+                if (stream) stream.getTracks().forEach((track) => track.stop());
+                return;
+            }
 
-                // Only connect if not already connected
-                if (!socket.connected) {
-                    socket.connect();
-                }
+            localStreamRef.current = stream;
+            setLocalStream(stream);
 
-            } catch (error) {
-                console.error("Camera/microphone error:", error);
+            if (!socket.connected) {
+                socket.connect();
             }
         };
 
         socket.on("connect", handleConnect);
+        socket.on("disconnect", handleDisconnect);
+        socket.on("connect_error", handleConnectError);
 
-        initializeWebRTC();
+        socket.on("existing-users", handleExistingUsers);
+        socket.on("user-joined", handleUserJoined);
+        socket.on("offer", handleOffer);
+        socket.on("answer", handleAnswer);
+        socket.on("ice-candidate", handleIceCandidate);
+        socket.on("user-left", handleUserLeft);
+        socket.on("meeting-ended", handleMeetingEnded);
 
         const handleMicStatus = ({ socketId, isMicOn }) => {
-
             setRemoteStreams((prev) =>
                 prev.map((participant) =>
-                    participant.socketId === socketId
-                        ? {
-                            ...participant,
-                            isMicOn
-                        }
-                        : participant
+                    participant.socketId === socketId ? { ...participant, isMicOn } : participant
                 )
             );
-
         };
 
         const handleCameraStatus = ({ socketId, isCameraOn }) => {
-
             setRemoteStreams((prev) =>
                 prev.map((participant) =>
-                    participant.socketId === socketId
-                        ? {
-                            ...participant,
-                            isCameraOn
-                        }
-                        : participant
+                    participant.socketId === socketId ? { ...participant, isCameraOn } : participant
                 )
             );
-
         };
 
-        socket.on(
-            "existing-users",
-            handleExistingUsers
-        );
+        socket.on("mic-status", handleMicStatus);
+        socket.on("camera-status", handleCameraStatus);
 
-        socket.on(
-            "user-joined",
-            handleUserJoined
-        );
-
-        socket.on(
-            "offer",
-            handleOffer
-        );
-
-        socket.on(
-            "answer",
-            handleAnswer
-        );
-
-        socket.on(
-            "ice-candidate",
-            handleIceCandidate
-        );
-
-        socket.on(
-            "user-left",
-            handleUserLeft
-        );
-
-        socket.on(
-            "mic-status",
-            handleMicStatus
-        );
-
-        socket.on(
-            "camera-status",
-            handleCameraStatus
-        );
+        initializeWebRTC();
 
         return () => {
-
             isMounted = false;
 
-            socket.off("connect",
-                handleConnect
-            );
+            socket.off("connect", handleConnect);
+            socket.off("disconnect", handleDisconnect);
+            socket.off("connect_error", handleConnectError);
+            socket.off("existing-users", handleExistingUsers);
+            socket.off("user-joined", handleUserJoined);
+            socket.off("offer", handleOffer);
+            socket.off("answer", handleAnswer);
+            socket.off("ice-candidate", handleIceCandidate);
+            socket.off("mic-status", handleMicStatus);
+            socket.off("camera-status", handleCameraStatus);
+            socket.off("user-left", handleUserLeft);
+            socket.off("meeting-ended", handleMeetingEnded);
 
-            socket.off(
-                "existing-users",
-                handleExistingUsers
-            );
-
-            socket.off(
-                "user-joined",
-                handleUserJoined
-            );
-
-            socket.off(
-                "offer",
-                handleOffer
-            );
-
-            socket.off(
-                "answer",
-                handleAnswer
-            );
-
-            socket.off(
-                "ice-candidate",
-                handleIceCandidate
-            );
-
-            socket.off(
-                "mic-status",
-                handleMicStatus
-            );
-
-            socket.off(
-                "camera-status",
-                handleCameraStatus
-            );
-
-            socket.off(
-                "user-left",
-                handleUserLeft
-            );
-
-            Object.values(
-                peerConnections.current
-            ).forEach(
-                (peerConnection) => {
-                    peerConnection.close();
-                }
-            );
+            Object.values(peerConnections.current).forEach((peerConnection) => {
+                peerConnection.close();
+            });
 
             peerConnections.current = {};
+            peerNames.current = {};
             pendingCandidates.current = {};
 
             if (stream) {
-
-                stream
-                    .getTracks()
-                    .forEach((track) => {
-                        track.stop();
-                    });
-
+                stream.getTracks().forEach((track) => track.stop());
             }
 
             socket.disconnect();
-
         };
 
     }, [roomId, currentUser]);
@@ -613,6 +513,10 @@ export default function useWebRTC(roomId, currentUser) {
         isScreenSharing,
         startScreenShare,
         stopScreenShare,
-        handleLeave
+        handleLeave,
+        handleEndMeeting,
+        mediaError,
+        isMeetingEnded,
+        connectionStatus
     };
 }

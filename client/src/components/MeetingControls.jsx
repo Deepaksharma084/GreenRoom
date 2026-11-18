@@ -1,3 +1,5 @@
+import { useState } from "react";
+
 export default function MeetingControls({
     isMicOn,
     onToggleMicrophone,
@@ -8,8 +10,12 @@ export default function MeetingControls({
     onStopScreenShare,
     onToggleParticipants,
     participantCount,
-    onLeave
+    onLeave,
+    isHost = false,
+    onEndMeeting
 }) {
+    const [showConfirmEnd, setShowConfirmEnd] = useState(false);
+
     return (
         <div className="fixed bottom-0 left-0 right-0 z-40 flex items-center justify-center gap-3 bg-zinc-900/90 px-4 py-4 backdrop-blur-sm sm:gap-4">
 
@@ -36,7 +42,7 @@ export default function MeetingControls({
                         : "bg-red-600 text-white hover:bg-red-500"
                 }`}
             >
-                {isCameraOn ? "📹" : "📹"}
+                {isCameraOn ? "📹" : "📹 Off"}
             </button>
 
             {/* Screen Share */}
@@ -59,19 +65,57 @@ export default function MeetingControls({
                 className="relative flex h-12 w-12 items-center justify-center rounded-full bg-zinc-700 text-lg text-white transition hover:bg-zinc-600 sm:h-14 sm:w-14"
             >
                 👥
-                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold">
+                <span className="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-emerald-600 text-xs font-bold text-white">
                     {participantCount}
                 </span>
             </button>
 
-            {/* Leave */}
+            {/* Leave button */}
             <button
                 onClick={onLeave}
                 title="Leave meeting"
-                className="flex h-12 w-12 items-center justify-center rounded-full bg-red-600 text-lg text-white transition hover:bg-red-500 sm:h-14 sm:w-14"
+                className="flex h-12 w-12 items-center justify-center rounded-full bg-zinc-700 text-lg text-white transition hover:bg-zinc-600 sm:h-14 sm:w-14"
             >
-                📞
+                🚪
             </button>
+
+            {/* Phase 22 & 23: Host End Meeting for Everyone */}
+            {isHost && (
+                <div className="relative">
+                    <button
+                        onClick={() => setShowConfirmEnd((prev) => !prev)}
+                        title="End meeting for everyone"
+                        className="flex h-12 items-center justify-center gap-1.5 rounded-full bg-red-600 px-4 text-sm font-semibold text-white transition hover:bg-red-500 sm:h-14 sm:px-5"
+                    >
+                        <span>End for All</span>
+                    </button>
+
+                    {showConfirmEnd && (
+                        <div className="absolute bottom-16 right-0 w-64 rounded-xl border border-zinc-700 bg-zinc-950 p-4 text-white shadow-2xl">
+                            <p className="text-xs text-zinc-300">
+                                End this meeting for all participants?
+                            </p>
+                            <div className="mt-3 flex justify-end gap-2">
+                                <button
+                                    onClick={() => setShowConfirmEnd(false)}
+                                    className="rounded-lg bg-zinc-800 px-3 py-1.5 text-xs font-medium text-zinc-300 hover:bg-zinc-700"
+                                >
+                                    Cancel
+                                </button>
+                                <button
+                                    onClick={() => {
+                                        setShowConfirmEnd(false);
+                                        if (onEndMeeting) onEndMeeting();
+                                    }}
+                                    className="rounded-lg bg-red-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-red-500"
+                                >
+                                    Confirm End
+                                </button>
+                            </div>
+                        </div>
+                    )}
+                </div>
+            )}
 
         </div>
     );
