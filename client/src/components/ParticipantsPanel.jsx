@@ -3,7 +3,8 @@ export default function ParticipantsPanel({
     isMicOn,
     isCameraOn,
     remoteStreams,
-    onClose
+    onClose,
+    isLocalHost = false
 }) {
     return (
         <div className="fixed top-0 right-0 z-50 flex h-full w-80 flex-col border-l border-zinc-700 bg-zinc-900 text-white shadow-2xl">
@@ -31,9 +32,16 @@ export default function ParticipantsPanel({
                                 ? localUser.name.charAt(0).toUpperCase()
                                 : "?"}
                         </div>
-                        <span className="text-sm font-medium">
-                            {localUser?.name || "You"} (You)
-                        </span>
+                        <div className="flex flex-col">
+                            <span className="text-sm font-medium">
+                                {localUser?.name || "You"} (You)
+                            </span>
+                            {isLocalHost && (
+                                <span className="w-fit rounded-full bg-emerald-900/60 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                                    Host
+                                </span>
+                            )}
+                        </div>
                     </div>
                     <div className="flex items-center gap-2 text-base">
                         <span title={isMicOn ? "Mic on" : "Mic off"}>
@@ -57,9 +65,16 @@ export default function ParticipantsPanel({
                                     ? participant.name.charAt(0).toUpperCase()
                                     : "?"}
                             </div>
-                            <span className="text-sm font-medium">
-                                {participant.name || "Unknown"}
-                            </span>
+                            <div className="flex flex-col">
+                                <span className="text-sm font-medium">
+                                    {participant.name || "Unknown"}
+                                </span>
+                                {participant.isHost && (
+                                    <span className="w-fit rounded-full bg-emerald-900/60 px-2 py-0.5 text-[10px] font-semibold text-emerald-300">
+                                        Host
+                                    </span>
+                                )}
+                            </div>
                         </div>
                         <div className="flex items-center gap-2 text-base">
                             <span title={participant.isMicOn ? "Mic on" : "Mic off"}>
@@ -76,4 +91,3 @@ export default function ParticipantsPanel({
         </div>
     );
 }
-

@@ -15,6 +15,7 @@ export default function useWebRTC(roomId, currentUser) {
 
     const peerConnections = useRef({});
     const peerNames = useRef({});
+    const peerHosts = useRef({});
     const localStreamRef = useRef(null);
     const pendingCandidates = useRef({});
     const screenStreamRef = useRef(null);
@@ -80,6 +81,7 @@ export default function useWebRTC(roomId, currentUser) {
         Object.values(peerConnections.current).forEach((pc) => pc.close());
         peerConnections.current = {};
         peerNames.current = {};
+        peerHosts.current = {};
         pendingCandidates.current = {};
 
         setRemoteStreams([]);
@@ -155,9 +157,12 @@ export default function useWebRTC(roomId, currentUser) {
         let isMounted = true;
         let stream;
 
-        const createPeerConnection = (remoteSocketId, remoteName) => {
+        const createPeerConnection = (remoteSocketId, remoteName, isHost) => {
             if (remoteName) {
                 peerNames.current[remoteSocketId] = remoteName;
+            }
+            if (typeof isHost === "boolean") {
+                peerHosts.current[remoteSocketId] = isHost;
             }
 
             const peerConnection = new RTCPeerConnection({
@@ -179,11 +184,23 @@ export default function useWebRTC(roomId, currentUser) {
                     peerConnection.close();
                     delete peerConnections.current[remoteSocketId];
                     delete peerNames.current[remoteSocketId];
+                    delete peerHosts.current[remoteSocketId];
                     delete pendingCandidates.current[remoteSocketId];
 
                     setRemoteStreams((previousStreams) =>
                         previousStreams.filter((item) => item.socketId !== remoteSocketId)
                     );
+                }
+            };
+
+            // Phase 25 & 26: ICE failure recovery
+            peerConnection.oniceconnectionstatechange = () => {
+                const iceState = peerConnection.iceConnectionState;
+                if (iceState === "failed") {
+                    console.warn("ICE connection failed with peer:", remoteSocketId, "attempting restart...");
+                    if (typeof peerConnection.restartIce === "function") {
+                        peerConnection.restartIce();
+                    }
                 }
             };
 
@@ -195,6 +212,7 @@ export default function useWebRTC(roomId, currentUser) {
                 }
 
                 const displayName = peerNames.current[remoteSocketId] || remoteName || "Participant";
+                const isPeerHost = Boolean(peerHosts.current[remoteSocketId] ?? isHost);
 
                 setRemoteStreams((previousStreams) => {
                     const existing = previousStreams.find((item) => item.socketId === remoteSocketId);
@@ -202,7 +220,7 @@ export default function useWebRTC(roomId, currentUser) {
                     if (existing) {
                         return previousStreams.map((item) =>
                             item.socketId === remoteSocketId
-                                ? { ...item, stream: remoteStream, name: displayName }
+                                ? { ...item, stream: remoteStream, name: displayName, isHost: isPeerHost }
                                 : item
                         );
                     }
@@ -213,6 +231,7 @@ export default function useWebRTC(roomId, currentUser) {
                             socketId: remoteSocketId,
                             stream: remoteStream,
                             name: displayName,
+                            isHost: isPeerHost,
                             isMicOn: true,
                             isCameraOn: true
                         }
@@ -234,10 +253,10 @@ export default function useWebRTC(roomId, currentUser) {
             return peerConnection;
         };
 
-        const createOffer = async (remoteSocketId, remoteName) => {
+        const createOffer = async (remoteSocketId, remoteName, isHost) => {
             const peerConnection =
                 peerConnections.current[remoteSocketId] ||
-                createPeerConnection(remoteSocketId, remoteName);
+                createPeerConnection(remoteSocketId, remoteName, isHost);
 
             const offer = await peerConnection.createOffer();
             await peerConnection.setLocalDescription(offer);
@@ -247,18 +266,28 @@ export default function useWebRTC(roomId, currentUser) {
 
         const handleExistingUsers = async ({ users }) => {
             for (const user of users) {
-                await createOffer(user.socketId, user.name);
+                if (typeof user.isHost === "boolean") {
+                    peerHosts.current[user.socketId] = user.isHost;
+                }
+                await createOffer(user.socketId, user.name, user.isHost);
             }
         };
 
-        const handleUserJoined = ({ socketId, name }) => {
+        const handleUserJoined = ({ socketId, name, isHost }) => {
             peerNames.current[socketId] = name;
+            if (typeof isHost === "boolean") {
+                peerHosts.current[socketId] = isHost;
+            }
         };
 
-        const handleOffer = async ({ socketId, offer, name }) => {
+        const handleOffer = async ({ socketId, offer, name, isHost }) => {
+            if (typeof isHost === "boolean") {
+                peerHosts.current[socketId] = isHost;
+            }
+
             let peerConnection = peerConnections.current[socketId];
             if (!peerConnection) {
-                peerConnection = createPeerConnection(socketId, name);
+                peerConnection = createPeerConnection(socketId, name, isHost);
             } else if (name) {
                 peerNames.current[socketId] = name;
             }
@@ -365,6 +394,18 @@ export default function useWebRTC(roomId, currentUser) {
             setMediaError(`Connection error: ${err.message}`);
         };
 
+        const handleReconnectAttempt = () => {
+            setConnectionStatus("reconnecting");
+        };
+
+        const handleReconnect = () => {
+            setConnectionStatus("connected");
+            socket.emit("join-room", {
+                roomId,
+                name: currentUser.name
+            });
+        };
+
         // Phase 22: Meeting Ended by Host
         const handleMeetingEnded = () => {
             console.log("Meeting ended by host");
@@ -440,6 +481,8 @@ export default function useWebRTC(roomId, currentUser) {
         socket.on("connect", handleConnect);
         socket.on("disconnect", handleDisconnect);
         socket.on("connect_error", handleConnectError);
+        socket.io.on("reconnect_attempt", handleReconnectAttempt);
+        socket.io.on("reconnect", handleReconnect);
 
         socket.on("existing-users", handleExistingUsers);
         socket.on("user-joined", handleUserJoined);
@@ -476,6 +519,8 @@ export default function useWebRTC(roomId, currentUser) {
             socket.off("connect", handleConnect);
             socket.off("disconnect", handleDisconnect);
             socket.off("connect_error", handleConnectError);
+            socket.io.off("reconnect_attempt", handleReconnectAttempt);
+            socket.io.off("reconnect", handleReconnect);
             socket.off("existing-users", handleExistingUsers);
             socket.off("user-joined", handleUserJoined);
             socket.off("offer", handleOffer);

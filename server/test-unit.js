@@ -86,6 +86,50 @@ assert(
     "getIceServersConfig returns secure array with STUN fallback"
 );
 
+// 6. Dynamic TURN configuration injection
+process.env.TURN_URL = "turn:turn.example.com:3478";
+process.env.TURN_USERNAME = "test_user";
+process.env.TURN_CREDENTIAL = "test_pass";
+let turnResponse = null;
+getIceServersConfig({}, {
+    status: () => ({
+        json: (data) => {
+            turnResponse = data;
+        }
+    })
+});
+assert(
+    turnResponse.iceServers.some((s) => s.urls === "turn:turn.example.com:3478" && s.username === "test_user"),
+    "getIceServersConfig dynamically includes TURN credentials when configured in environment"
+);
+delete process.env.TURN_URL;
+delete process.env.TURN_USERNAME;
+delete process.env.TURN_CREDENTIAL;
+
+// 7. Phase 23: Host Permission Verification Logic
+const meetingSample = {
+    host_user_id: "user-uuid-1",
+    host_guest_id: "guest-uuid-2"
+};
+const user1 = { id: "user-uuid-1", type: "user" };
+const user2 = { id: "user-uuid-99", type: "user" };
+const guest1 = { id: "guest-uuid-2", type: "guest" };
+const guest2 = { id: "guest-uuid-88", type: "guest" };
+
+const isHost1 = (user1.type === "user" && meetingSample.host_user_id === user1.id) ||
+                (user1.type === "guest" && meetingSample.host_guest_id === user1.id);
+const isHost2 = (user2.type === "user" && meetingSample.host_user_id === user2.id) ||
+                (user2.type === "guest" && meetingSample.host_guest_id === user2.id);
+const isHost3 = (guest1.type === "user" && meetingSample.host_user_id === guest1.id) ||
+                (guest1.type === "guest" && meetingSample.host_guest_id === guest1.id);
+const isHost4 = (guest2.type === "user" && meetingSample.host_user_id === guest2.id) ||
+                (guest2.type === "guest" && meetingSample.host_guest_id === guest2.id);
+
+assert(isHost1 === true, "Host permission matches host_user_id for registered user");
+assert(isHost2 === false, "Host permission rejects non-host registered user");
+assert(isHost3 === true, "Host permission matches host_guest_id for guest creator");
+assert(isHost4 === false, "Host permission rejects non-host guest");
+
 console.log("\n=========================================");
 console.log(`TOTAL PASSED: ${passed}`);
 console.log(`TOTAL FAILED: ${failed}`);

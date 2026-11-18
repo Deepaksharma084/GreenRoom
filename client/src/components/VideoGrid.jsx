@@ -5,7 +5,8 @@ export default function VideoGrid({
     remoteStreams,
     isMicOn,
     isCameraOn,
-    currentUser
+    currentUser,
+    isLocalHost = false
 }) {
     const totalParticipants = (localStream ? 1 : 0) + remoteStreams.length;
 
@@ -28,7 +29,6 @@ export default function VideoGrid({
         <div
             className={`grid min-h-screen gap-2 bg-black p-2 pb-24 ${getGridClasses()}`}
         >
-
             {localStream && (
                 <VideoTile
                     stream={localStream}
@@ -36,6 +36,7 @@ export default function VideoGrid({
                     muted={true}
                     isMicOn={isMicOn}
                     isCameraOn={isCameraOn}
+                    isHost={isLocalHost}
                 />
             )}
 
@@ -46,9 +47,9 @@ export default function VideoGrid({
                     name={participant.name}
                     isMicOn={participant.isMicOn}
                     isCameraOn={participant.isCameraOn}
+                    isHost={participant.isHost}
                 />
             ))}
-
         </div>
     );
 }

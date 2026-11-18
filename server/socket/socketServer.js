@@ -76,10 +76,12 @@ export const initializeSocket = (io) => {
             const roomID = roomId?.trim().toUpperCase();
             if (!roomID) return;
 
-            // Phase 17 & 18: Reject ended or non-existent meetings on socket join
+            let isHost = false;
+
+            // Phase 17, 18, 23: Reject ended or non-existent meetings on socket join & identify host
             try {
                 const meetingCheck = await pool.query(
-                    "SELECT id, status FROM meetings WHERE room_id = $1",
+                    "SELECT id, host_user_id, host_guest_id, status FROM meetings WHERE room_id = $1",
                     [roomID]
                 );
 
@@ -87,6 +89,10 @@ export const initializeSocket = (io) => {
                     socket.emit("meeting-ended");
                     return;
                 }
+
+                const meeting = meetingCheck.rows[0];
+                isHost = (socket.user?.type === "user" && meeting.host_user_id === socket.user.id) ||
+                         (socket.user?.type === "guest" && meeting.host_guest_id === socket.user.id);
             } catch (dbErr) {
                 console.error("Error validating room in join-room:", dbErr);
             }
@@ -99,7 +105,8 @@ export const initializeSocket = (io) => {
             const existingUsers = Array.from(roomParticipants.entries()).map(
                 ([socketId, participant]) => ({
                     socketId,
-                    name: participant.name
+                    name: participant.name,
+                    isHost: Boolean(participant.isHost)
                 })
             );
 
@@ -107,7 +114,8 @@ export const initializeSocket = (io) => {
             roomParticipants.set(socket.id, {
                 name: participantName,
                 userId: socket.user?.id,
-                userType: socket.user?.type
+                userType: socket.user?.type,
+                isHost: Boolean(isHost)
             });
 
             participants.set(roomID, roomParticipants);
@@ -117,7 +125,7 @@ export const initializeSocket = (io) => {
             socket.join(roomID);
 
             console.log(
-                `${participantName} (${socket.id}) joined room ${roomID}`
+                `${participantName} (${socket.id}) joined room ${roomID}${isHost ? " [HOST]" : ""}`
             );
 
             // Tells the new participant who is already there
@@ -128,20 +136,24 @@ export const initializeSocket = (io) => {
             // Tells existing participants about the new participant
             socket.to(roomID).emit("user-joined", {
                 socketId: socket.id,
-                name: participantName
+                name: participantName,
+                isHost: Boolean(isHost)
             });
         });
 
-        // OFFER — include sender name so receiver can associate the peer
+        // OFFER — include sender name and host status so receiver can associate the peer
         socket.on("offer", ({ targetSocketId, offer }) => {
             const roomId = socketRoomMap.get(socket.id);
             const roomParticipants = participants.get(roomId);
-            const senderName = roomParticipants?.get(socket.id)?.name || socket.user?.name || "Unknown";
+            const sender = roomParticipants?.get(socket.id);
+            const senderName = sender?.name || socket.user?.name || "Unknown";
+            const senderIsHost = sender?.isHost || false;
 
             io.to(targetSocketId).emit("offer", {
                 socketId: socket.id,
                 offer,
-                name: senderName
+                name: senderName,
+                isHost: senderIsHost
             });
         });
 

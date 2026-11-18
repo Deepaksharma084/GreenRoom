@@ -18,6 +18,17 @@ export default function MeetingPage() {
     useEffect(() => {
         let isMounted = true;
 
+        // Phase 25: Safety timeout to guarantee the UI is never stuck in a loading state
+        const timeoutTimer = setTimeout(() => {
+            if (isMounted && loading) {
+                setAuthError({
+                    title: "Connection Timeout",
+                    message: "Connecting to the meeting took longer than expected. Please check your network and try again."
+                });
+                setLoading(false);
+            }
+        }, 15000);
+
         const initialize = async () => {
             try {
                 // Step 1: Check authentication
@@ -86,6 +97,7 @@ export default function MeetingPage() {
 
         return () => {
             isMounted = false;
+            clearTimeout(timeoutTimer);
         };
     }, [roomId, navigate]);
 
@@ -219,13 +231,13 @@ function MeetingContent({ roomId, currentUser, meetingInfo }) {
                         className={`h-2.5 w-2.5 rounded-full ${
                             connectionStatus === "connected"
                                 ? "bg-emerald-400"
-                                : connectionStatus === "connecting"
+                                : connectionStatus === "connecting" || connectionStatus === "reconnecting"
                                 ? "bg-yellow-400 animate-pulse"
                                 : "bg-red-500"
                         }`}
                     />
                     <span className="text-xs capitalize text-zinc-400">
-                        {connectionStatus}
+                        {connectionStatus === "reconnecting" ? "Reconnecting..." : connectionStatus}
                     </span>
                 </div>
             </div>
@@ -250,6 +262,7 @@ function MeetingContent({ roomId, currentUser, meetingInfo }) {
                 isMicOn={isMicOn}
                 isCameraOn={isCameraOn}
                 currentUser={currentUser}
+                isLocalHost={meetingInfo?.isHost}
             />
 
             {/* Meeting Controls */}
@@ -276,6 +289,7 @@ function MeetingContent({ roomId, currentUser, meetingInfo }) {
                     isCameraOn={isCameraOn}
                     remoteStreams={remoteStreams}
                     onClose={() => setShowParticipants(false)}
+                    isLocalHost={meetingInfo?.isHost}
                 />
             )}
 
